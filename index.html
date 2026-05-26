@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>System Design — A Filter Coffee Way notebook</title>
-  <meta name="description" content="A long-form notebook on how large-scale systems are designed — trade-offs, numbers, and patterns. Hand-pulled by Filter Coffee Way." />
+  <title>Filter Coffee Way</title>
+  <meta name="description" content="Ground fresh. Think deep. Build strong. Long-form writing on distributed systems, engineering culture, and the craft of building software — brewed in Madras." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
   <style>
     /* -------------------------------------------------------------
-       Filter Coffee Way — System Design
-       Editorial / warm-paper notebook
+       Filter Coffee Way
+       Editorial / warm-paper site
        ------------------------------------------------------------- */
 
     :root {
-      --paper:       #f6efe1;   /* warm cream — base */
-      --paper-2:     #fbf6ec;   /* lighter, cards */
-      --paper-3:     #efe5d0;   /* depressed surface */
-      --ink:         #2b1d12;   /* deep espresso */
-      --ink-2:       #6b5947;   /* muted body */
-      --ink-3:       #a89580;   /* faint metadata */
-      --rule:        #e3d6bf;   /* warm divider */
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
       --rule-2:      #d6c5a4;
-      --accent:      #a85a2a;   /* terracotta — the pour */
-      --accent-soft: #d99c5e;   /* warm gold */
-      --ok:          #6a7d5b;   /* sage — published */
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
       --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
 
       --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, "Times New Roman", serif;
@@ -41,7 +41,6 @@
       color: var(--ink);
       line-height: 1.6;
       font-size: 16px;
-      /* faint paper grain */
       background-image:
         radial-gradient(rgba(168, 90, 42, 0.035) 1px, transparent 1px),
         radial-gradient(rgba(43, 29, 18, 0.025) 1px, transparent 1px);
@@ -105,7 +104,7 @@
     }
     .issue-strip .dot { color: var(--accent); }
 
-    /* ---------- Hero / Cover story ---------- */
+    /* ---------- Hero ---------- */
     .cover {
       display: grid;
       grid-template-columns: 1.55fr 1fr;
@@ -150,22 +149,6 @@
       max-width: 38ch;
       margin-bottom: 28px;
     }
-    .byline {
-      display: flex; flex-wrap: wrap; gap: 8px 14px;
-      font-size: 12px; color: var(--ink-3);
-      letter-spacing: 0.04em;
-      margin-bottom: 28px;
-      align-items: center;
-    }
-    .byline .sep { color: var(--rule-2); }
-    .byline .tag {
-      font-size: 11px;
-      padding: 2px 9px;
-      border: 1px solid var(--rule-2);
-      border-radius: 99px;
-      color: var(--ink-2);
-      background: var(--paper-2);
-    }
     .cta {
       display: inline-flex; align-items: center; gap: 10px;
       font-family: var(--sans);
@@ -178,6 +161,11 @@
     .cta:hover { color: var(--accent); }
     .cta .arrow { transition: transform .2s; }
     .cta:hover .arrow { transform: translateX(4px); }
+    .cta-secondary {
+      border-bottom-color: var(--rule-2);
+      color: var(--ink-2);
+    }
+    .cta-secondary:hover { color: var(--ink); border-bottom-color: var(--ink-3); }
 
     /* Drop cap intro paragraph */
     .intro {
@@ -198,8 +186,8 @@
       color: var(--accent);
     }
 
-    /* Stat block (right column of cover) */
-    .stat-block {
+    /* ---------- Principles block (hero right col) ---------- */
+    .principles-block {
       background: var(--paper-2);
       border: 1px solid var(--rule);
       border-radius: 6px;
@@ -208,8 +196,8 @@
       box-shadow: var(--shadow);
       position: relative;
     }
-    .stat-block::before {
-      content: "AT A GLANCE";
+    .principles-block::before {
+      content: "THE SEVEN PRINCIPLES";
       position: absolute;
       top: -9px; left: 22px;
       background: var(--paper);
@@ -219,28 +207,38 @@
       color: var(--accent);
       font-weight: 600;
     }
-    .stat {
-      display: flex; align-items: baseline; justify-content: space-between;
-      padding: 14px 0;
+    .principle-item {
+      display: flex;
+      gap: 14px;
+      padding: 11px 0;
       border-bottom: 1px dashed var(--rule);
-      gap: 16px;
+      align-items: flex-start;
     }
-    .stat:last-child { border-bottom: none; padding-bottom: 0; }
-    .stat:first-child { padding-top: 4px; }
-    .stat-label {
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--ink-3);
+    .principle-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .principle-item:first-child { padding-top: 4px; }
+    .principle-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+      padding-top: 3px;
+      min-width: 22px;
     }
-    .stat-value {
+    .principle-name {
       font-family: var(--serif);
-      font-weight: 600;
-      font-size: 22px;
+      font-style: italic;
+      font-size: 15px;
+      font-weight: 500;
       color: var(--ink);
-      letter-spacing: -0.01em;
+      margin-bottom: 2px;
     }
-    .stat-value .unit { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-3); margin-left: 4px; letter-spacing: 0.04em; }
+    .principle-desc {
+      font-size: 12px;
+      color: var(--ink-2);
+      line-height: 1.45;
+    }
 
     /* ---------- Section header ---------- */
     .section { padding: 72px 0; border-bottom: 1px solid var(--rule); }
@@ -271,8 +269,10 @@
       font-style: italic;
       max-width: 40ch;
     }
+    .section-aside a { color: var(--ink-2); border-bottom: 1px solid var(--rule); }
+    .section-aside a:hover { color: var(--accent); border-color: var(--accent); }
 
-    /* ---------- Designs grid (asymmetric editorial) ---------- */
+    /* ---------- Article cards / grid ---------- */
     .designs-grid {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
@@ -338,8 +338,7 @@
 
     .card-feature {
       grid-column: span 6;
-      background:
-        linear-gradient(135deg, var(--paper-2) 0%, var(--paper-3) 100%);
+      background: linear-gradient(135deg, var(--paper-2) 0%, var(--paper-3) 100%);
       border-color: var(--rule-2);
       min-height: 240px;
     }
@@ -540,79 +539,180 @@
   <header class="masthead">
     <div class="masthead-row">
       <div>
-        <div class="wordmark">System Design <span class="amp">&amp;</span> Trade-offs</div>
-        <span class="wordmark-sub">a Filter Coffee Way notebook</span>
+        <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
+        <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
       </div>
       <nav>
-        <a href="#designs">Designs</a>
+        <a href="#blog">Blog</a>
+        <a href="#designs">System Design</a>
         <a href="#patterns">Patterns</a>
         <a href="#numbers">Numbers</a>
-        <a href="_topic-roadmap.html">Roadmap</a>
         <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
     <div class="issue-strip">
-      <span>Vol. I &nbsp;·&nbsp; Issue 01</span>
-      <span><span class="dot">●</span> &nbsp; Updated weekly</span>
-      <span>MMXXVI</span>
+      <span>filtercoffeeway.com &nbsp;·&nbsp; Vol. I</span>
+      <span><span class="dot">●</span> &nbsp; Updated regularly</span>
+      <span>Madras</span>
     </div>
   </header>
 
-  <!-- ====================== COVER STORY ====================== -->
+  <!-- ====================== HERO ====================== -->
   <section class="cover">
     <div class="cover-main">
-      <div class="kicker">Cover story · No. 01</div>
-      <h1>URL <em>Shortener</em></h1>
-      <p class="dek">A read-heavy redirect at planet scale, designed around a single elegant constraint: <em>never make the user wait.</em></p>
+      <div class="kicker">Est. MMXXVI · Madras</div>
+      <h1>Ground fresh.<br><em>Think deep.</em></h1>
+      <p class="dek">Writing on distributed systems, engineering culture, and the craft of building software — served through the lens of South Indian filter coffee.</p>
 
-      <div class="byline">
-        <span>Published <strong style="color:var(--ink-2);font-weight:500;">25 May 2026</strong></span>
-        <span class="sep">·</span>
-        <span class="tag">Medium</span>
-        <span class="tag">read-heavy</span>
-        <span class="tag">caching</span>
-        <span class="tag">base62</span>
-        <span class="tag">NoSQL</span>
+      <p class="intro">Filter coffee is not instant. It is slow, deliberate, and demanding — ground fresh each morning, dripped through a steel percolator, served only when it is ready. That is the philosophy here. Every post starts from first principles. Every system design walks the trade-offs, not just the answers. Every idea is brewed until it is worth serving.</p>
+
+      <div style="display:flex; gap:32px; flex-wrap:wrap;">
+        <a class="cta" href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">
+          Read the blog <span class="arrow">→</span>
+        </a>
+        <a class="cta cta-secondary" href="#designs">
+          System design <span class="arrow">→</span>
+        </a>
       </div>
-
-      <p class="intro">Shortening a URL is easy. Doing it at a hundred thousand requests per second, with five-nines availability and sub-ten-millisecond redirects, is where the trade-offs begin. This is a walk through the decisions: counter ranges versus hashing, Cassandra versus Postgres, where the cache earns its keep, and which mistakes look fine until traffic doubles.</p>
-
-      <a class="cta" href="designs/url-shortener.html">
-        Read the design
-        <span class="arrow">→</span>
-      </a>
     </div>
 
-    <aside class="stat-block">
-      <div class="stat">
-        <span class="stat-label">Read / write ratio</span>
-        <span class="stat-value">100<span class="unit">: 1</span></span>
+    <aside class="principles-block">
+      <div class="principle-item">
+        <span class="principle-num">01</span>
+        <div>
+          <div class="principle-name">Grind fresh</div>
+          <div class="principle-desc">First-principles thinking before reaching for borrowed solutions</div>
+        </div>
       </div>
-      <div class="stat">
-        <span class="stat-label">Peak QPS (reads)</span>
-        <span class="stat-value">100<span class="unit">K</span></span>
+      <div class="principle-item">
+        <span class="principle-num">02</span>
+        <div>
+          <div class="principle-name">Drip slow</div>
+          <div class="principle-desc">Deep work cannot be hurried; protect uninterrupted time</div>
+        </div>
       </div>
-      <div class="stat">
-        <span class="stat-label">Latency target</span>
-        <span class="stat-value">&lt; 10<span class="unit">ms p99</span></span>
+      <div class="principle-item">
+        <span class="principle-num">03</span>
+        <div>
+          <div class="principle-name">Find the ratio</div>
+          <div class="principle-desc">There is no universal right answer — calibrate to context</div>
+        </div>
       </div>
-      <div class="stat">
-        <span class="stat-label">Storage / yr</span>
-        <span class="stat-value">~30<span class="unit">GB</span></span>
+      <div class="principle-item">
+        <span class="principle-num">04</span>
+        <div>
+          <div class="principle-name">Pour with intention</div>
+          <div class="principle-desc">How you communicate matters as much as what you communicate</div>
+        </div>
       </div>
-      <div class="stat">
-        <span class="stat-label">Encoding</span>
-        <span class="stat-value">base<span class="unit">62 · 7-char</span></span>
+      <div class="principle-item">
+        <span class="principle-num">05</span>
+        <div>
+          <div class="principle-name">Show up every morning</div>
+          <div class="principle-desc">Consistency is the highest form of craft; raise the floor</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <span class="principle-num">06</span>
+        <div>
+          <div class="principle-name">Name the instant coffee</div>
+          <div class="principle-desc">Shortcuts are fine; self-deception about them is not</div>
+        </div>
+      </div>
+      <div class="principle-item">
+        <span class="principle-num">07</span>
+        <div>
+          <div class="principle-name">Brew the coffee, not the cup</div>
+          <div class="principle-desc">Ship the thing itself before polishing the container</div>
+        </div>
       </div>
     </aside>
   </section>
 
-  <!-- ====================== DESIGNS ====================== -->
-  <section class="section" id="designs">
+  <!-- ====================== BLOG ====================== -->
+  <section class="section" id="blog">
     <div class="section-head">
       <div>
         <span class="section-num">i.</span>
-        <span class="section-title">In this collection</span>
+        <span class="section-title">From the blog</span>
+      </div>
+      <div class="section-aside">Published at <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">blog.filtercoffeeway.com</a> — long-form writing on systems and engineering culture.</div>
+    </div>
+
+    <div class="designs-grid">
+
+      <!-- Published: manifesto post -->
+      <a href="https://blog.filtercoffeeway.com/i-am-the-filter-coffee-way" class="article-card card-feature" style="text-decoration:none;" target="_blank" rel="noopener">
+        <div class="card-kicker">The Manifesto · Published</div>
+        <h3>I Am the Filter Coffee Way</h3>
+        <p class="summary">Seven principles. One ritual. One way of thinking. Grind fresh. Drip slow. Find the ratio. A philosophy for the craft of software, written in the language of Madras mornings.</p>
+        <div class="card-meta">
+          <span class="pill badge-published">✓ Published</span>
+          <span class="pill">principles</span>
+          <span class="pill">culture</span>
+          <span class="pill">manifesto</span>
+        </div>
+      </a>
+
+      <a href="https://blog.filtercoffeeway.com" class="article-card span-3" style="text-decoration:none;" target="_blank" rel="noopener">
+        <div class="card-kicker">The Decoction · Coming Soon</div>
+        <h3>URL Shortener, Brewed Slow</h3>
+        <p class="summary">The full system design narrated — base62, Cassandra, layered cache. The reasoning behind every call.</p>
+        <div class="card-meta">
+          <span class="pill badge-soon">Coming Soon</span>
+          <span class="pill">system-design</span>
+        </div>
+      </a>
+
+      <a href="https://blog.filtercoffeeway.com" class="article-card span-3" style="text-decoration:none;" target="_blank" rel="noopener">
+        <div class="card-kicker">First Pour · Coming Soon</div>
+        <h3>Show Up Every Morning</h3>
+        <p class="summary">On consistency as craft — why raising the floor matters more than chasing the ceiling.</p>
+        <div class="card-meta">
+          <span class="pill badge-soon">Coming Soon</span>
+          <span class="pill">culture</span>
+        </div>
+      </a>
+
+      <a href="https://blog.filtercoffeeway.com" class="article-card span-4" style="text-decoration:none;" target="_blank" rel="noopener">
+        <div class="card-kicker">The Grounds · Coming Soon</div>
+        <h3>CAP Theorem, Explained</h3>
+        <p class="summary">Consistency, availability, partition tolerance — what you actually give up in practice, and when it matters.</p>
+        <div class="card-meta">
+          <span class="pill badge-soon">Coming Soon</span>
+          <span class="pill">foundations</span>
+        </div>
+      </a>
+
+      <a href="https://blog.filtercoffeeway.com" class="article-card span-4" style="text-decoration:none;" target="_blank" rel="noopener">
+        <div class="card-kicker">The Blend · Coming Soon</div>
+        <h3>B-tree vs LSM-tree</h3>
+        <p class="summary">Two storage engine strategies, two different bets on the workload. What Postgres and Cassandra chose — and why.</p>
+        <div class="card-meta">
+          <span class="pill badge-soon">Coming Soon</span>
+          <span class="pill">databases</span>
+        </div>
+      </a>
+
+      <a href="https://blog.filtercoffeeway.com" class="article-card span-4" style="text-decoration:none;" target="_blank" rel="noopener">
+        <div class="card-kicker">First Pour · Coming Soon</div>
+        <h3>The Junior Engineer's Blueprint</h3>
+        <p class="summary">What to optimize for in years one through three. Hint: it is not the tech stack.</p>
+        <div class="card-meta">
+          <span class="pill badge-soon">Coming Soon</span>
+          <span class="pill">career</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ====================== SYSTEM DESIGN ====================== -->
+  <section class="section" id="designs">
+    <div class="section-head">
+      <div>
+        <span class="section-num">ii.</span>
+        <span class="section-title">System design</span>
       </div>
       <div class="section-aside">Each design walks the same path: requirements, back-of-envelope numbers, high-level design, the deep dives where it gets interesting.</div>
     </div>
@@ -632,7 +732,6 @@
         </div>
       </a>
 
-      <!-- Coming soon cards -->
       <a href="_topic-roadmap.html" class="article-card span-3" style="text-decoration:none;">
         <div class="card-kicker">Issue 02 · Drafting</div>
         <h3>Paste Bin</h3>
@@ -703,7 +802,7 @@
   <section class="section" id="patterns">
     <div class="section-head">
       <div>
-        <span class="section-num">ii.</span>
+        <span class="section-num">iii.</span>
         <span class="section-title">Patterns &amp; references</span>
       </div>
       <div class="section-aside">Reusable building blocks that show up across designs. Open one when you need a refresher on the trade-offs.</div>
@@ -732,7 +831,7 @@
   <section class="section" id="numbers">
     <div class="section-head">
       <div>
-        <span class="section-num">iii.</span>
+        <span class="section-num">iv.</span>
         <span class="section-title">Numbers to know cold</span>
       </div>
       <div class="section-aside">The latencies, sizes, and throughputs you should be able to estimate without a calculator. Adapted from Jeff Dean's classic list.</div>
@@ -769,8 +868,8 @@
   <section class="section">
     <div class="roadmap-cta">
       <div>
-        <h3>The whole roadmap, in one page</h3>
-        <p>Every topic on the docket — what's done, what's drafting, and what's still just an interesting question. Updated as the notebook grows.</p>
+        <h3>The full system design roadmap</h3>
+        <p>Every topic on the docket — what's published, what's drafting, and what's still just an interesting question. Updated as the notebook grows.</p>
       </div>
       <div class="right">
         <a class="cta" href="_topic-roadmap.html">
@@ -789,12 +888,12 @@
     </div>
     <div class="footer-row" style="margin-top:24px;">
       <div class="footer-mark">
-        Hand-written, hand-pulled. <span class="accent">— filter coffee way</span>
+        Brewed in Madras. Served to the world. <span class="accent">— filter coffee way</span>
       </div>
       <div class="footer-meta">
-        © 2026 · made for understanding
+        © 2026 · filtercoffeeway.com
+        <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
         <a href="_topic-roadmap.html">Roadmap</a>
-        <a href="templates/design-template.html">Template</a>
         <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
       </div>
     </div>
