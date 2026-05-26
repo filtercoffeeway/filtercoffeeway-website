@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Topics — System Design</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
+    a { color: #7dd3fc; text-decoration: none; }
+    a:hover { text-decoration: underline; color: #38bdf8; }
+    .layout { display: flex; min-height: 100vh; }
+    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
+    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    nav ul { list-style: none; padding: 4px 0; }
+    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
+    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; background: #1e293b22; }
+    .status-done { color: #4ade80 !important; }
+    main { flex: 1; padding: 48px 56px; max-width: 900px; }
+    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .page-meta { color: #475569; font-size: 14px; margin-bottom: 40px; }
+    h2 { font-size: 16px; font-weight: 700; color: #f1f5f9; margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; }
+    h3 { font-size: 14px; font-weight: 600; color: #94a3b8; margin: 24px 0 10px; letter-spacing: 0.05em; text-transform: uppercase; font-size: 12px; }
+    ul { list-style: none; padding: 0; }
+    ul li { padding: 5px 0; font-size: 14px; color: #cbd5e1; display: flex; align-items: center; gap: 10px; }
+    .check { color: #4ade80; font-weight: 600; }
+    .todo { color: #334155; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #94a3b8; white-space: nowrap; }
+    td:nth-child(2) { color: #7dd3fc; font-family: "SF Mono", "Fira Code", monospace; }
+    .topic-link { color: #7dd3fc; }
+    p { font-size: 14px; color: #94a3b8; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="nav-logo">System Design</div>
+    <div class="nav-section">Navigation</div>
+    <ul>
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="../_topic-roadmap.html" class="active">🗺 Topics</a></li>
+    </ul>
+    <div class="nav-section">Designs</div>
+    <ul>
+      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
+    </ul>
+    <div class="nav-section">Patterns</div>
+    <ul>
+      <li><a href="../patterns/caching.html">Caching</a></li>
+      <li><a href="../patterns/token-generation.html">Token Generation</a></li>
+      <li><a href="../patterns/database-selection.html">Database Selection</a></li>
+    </ul>
+    <div class="nav-section">Templates</div>
+    <ul>
+      <li><a href="../templates/design-template.html">Design Template</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Topics</h1>
+    <p class="page-meta">All system design topics — deep dives, trade-offs, and the reasoning behind every decision.</p>
+
+    <h2>Designs</h2>
+
+    <h3>✅ Published</h3>
+    <ul>
+      <li><span class="check">✓</span> <a href="../designs/url-shortener.html">URL Shortener</a> — read-heavy, caching, base62, Zookeeper counter</li>
+    </ul>
+
+    <h3>🔲 Coming Soon</h3>
+    <ul>
+      <li><span class="todo">○</span> Paste Bin / text sharing</li>
+      <li><span class="todo">○</span> Instagram / photo sharing feed</li>
+      <li><span class="todo">○</span> Twitter / social media timeline</li>
+      <li><span class="todo">○</span> YouTube / video streaming</li>
+      <li><span class="todo">○</span> WhatsApp / chat system</li>
+      <li><span class="todo">○</span> Uber / ride-sharing with geolocation</li>
+      <li><span class="todo">○</span> Rate limiter</li>
+      <li><span class="todo">○</span> Web crawler</li>
+      <li><span class="todo">○</span> Notification system</li>
+      <li><span class="todo">○</span> Search autocomplete / typeahead</li>
+      <li><span class="todo">○</span> Distributed key-value store</li>
+      <li><span class="todo">○</span> Distributed cache (Redis-style)</li>
+      <li><span class="todo">○</span> Consistent hashing deep dive</li>
+      <li><span class="todo">○</span> Distributed message queue (Kafka-style)</li>
+      <li><span class="todo">○</span> Payment system</li>
+    </ul>
+
+    <h2>Concepts Reference</h2>
+    <p>Core concepts that appear across multiple designs — worth understanding deeply.</p>
+
+    <h3>Fundamentals</h3>
+    <ul>
+      <li><span class="todo">○</span> CAP theorem — what each letter means and real-world examples of each trade-off</li>
+      <li><span class="todo">○</span> BASE vs ACID — when to choose which</li>
+      <li><span class="todo">○</span> Horizontal vs vertical scaling</li>
+      <li><span class="todo">○</span> Stateless vs stateful services</li>
+      <li><span class="todo">○</span> Synchronous vs asynchronous communication</li>
+    </ul>
+
+    <h3>Data Storage</h3>
+    <ul>
+      <li><span class="todo">○</span> SQL vs NoSQL — decision framework, not just "SQL = relational"</li>
+      <li><span class="todo">○</span> Sharding strategies — range, hash, directory-based</li>
+      <li><span class="todo">○</span> Replication — leader-follower, multi-leader, leaderless</li>
+      <li><span class="todo">○</span> Indexes — B-tree, LSM-tree, when each is better</li>
+      <li><span class="todo">○</span> Consistent hashing — how it works, virtual nodes, use cases</li>
+    </ul>
+
+    <h3>Caching</h3>
+    <ul>
+      <li><span class="todo">○</span> Cache-aside, write-through, write-behind, read-through</li>
+      <li><span class="todo">○</span> Cache stampede / thundering herd and solutions</li>
+      <li><span class="todo">○</span> Eviction policies — LRU, LFU, TTL</li>
+      <li><span class="todo">○</span> Redis vs Memcached — when to pick which</li>
+      <li><span class="todo">○</span> CDN — push vs pull, cache invalidation</li>
+    </ul>
+
+    <h3>Networking & APIs</h3>
+    <ul>
+      <li><span class="todo">○</span> REST vs GraphQL vs gRPC — trade-offs</li>
+      <li><span class="todo">○</span> Long polling vs WebSockets vs Server-Sent Events</li>
+      <li><span class="todo">○</span> Load balancing — round-robin, least connections, consistent hashing</li>
+      <li><span class="todo">○</span> Rate limiting — token bucket, leaky bucket, sliding window</li>
+    </ul>
+
+    <h3>Distributed Systems</h3>
+    <ul>
+      <li><span class="todo">○</span> Leader election</li>
+      <li><span class="todo">○</span> Distributed transactions — 2PC, saga pattern</li>
+      <li><span class="todo">○</span> Message queues — Kafka, RabbitMQ, trade-offs</li>
+      <li><span class="todo">○</span> Idempotency — why it matters, how to implement</li>
+      <li><span class="todo">○</span> Exactly-once vs at-least-once delivery</li>
+      <li><span class="todo">○</span> Bloom filters — use cases, false positive rate</li>
+      <li><span class="todo">○</span> Distributed locks</li>
+    </ul>
+
+    <h3>Estimation</h3>
+    <ul>
+      <li><span class="todo">○</span> Back-of-envelope math — QPS, storage, bandwidth</li>
+      <li><span class="todo">○</span> Read/write ratio reasoning</li>
+      <li><span class="todo">○</span> When to reach for what tier (cache vs DB vs CDN)</li>
+    </ul>
+
+    <h2>Numbers to Know Cold</h2>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>L1 cache hit</td><td>~1 ns</td><td></td></tr>
+        <tr><td>L2 cache hit</td><td>~10 ns</td><td></td></tr>
+        <tr><td>RAM access</td><td>~100 ns</td><td>100× slower than L1</td></tr>
+        <tr><td>SSD random read</td><td>~100 µs</td><td>1000× slower than RAM</td></tr>
+        <tr><td>HDD seek</td><td>~10 ms</td><td>100× slower than SSD</td></tr>
+        <tr><td>Network (same DC)</td><td>~0.5 ms</td><td></td></tr>
+        <tr><td>Network (cross-region)</td><td>~150 ms</td><td></td></tr>
+        <tr><td>1 Gbps NIC</td><td>~125 MB/s</td><td></td></tr>
+        <tr><td>MySQL/Postgres write</td><td>~1–5 ms</td><td>single row, no contention</td></tr>
+        <tr><td>Redis get</td><td>~0.1 ms</td><td>in-memory</td></tr>
+        <tr><td>Typical DB row</td><td>~1 KB</td><td></td></tr>
+        <tr><td>Typical image (compressed)</td><td>~300 KB</td><td></td></tr>
+        <tr><td>Typical video (1 min, 720p)</td><td>~50 MB</td><td></td></tr>
+        <tr><td>1 million seconds</td><td>~11.5 days</td><td>handy for TTL math</td></tr>
+        <tr><td>1 billion seconds</td><td>~31.7 years</td><td>handy for ID space sizing</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Pattern Cross-Reference</h2>
+    <table>
+      <thead><tr><th>Pattern</th><th>Appears in</th></tr></thead>
+      <tbody>
+        <tr><td>Base62 encoding</td><td>URL Shortener, Order IDs, Session tokens</td></tr>
+        <tr><td>Zookeeper coordination</td><td>URL Shortener (counter), Leader election</td></tr>
+        <tr><td>Cassandra (wide-column)</td><td>URL Shortener, Chat, Timeline</td></tr>
+        <tr><td>Write-through cache</td><td>URL Shortener, Feed, any read-heavy system</td></tr>
+        <tr><td>Cache stampede mitigation</td><td>URL Shortener, Feed, any hot-key scenario</td></tr>
+        <tr><td>Consistent hashing</td><td>Cache clusters, Sharding, Load balancing</td></tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+</body>
+</html>

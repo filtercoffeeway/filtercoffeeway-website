@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Shortener — System Design</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
+    a { color: #7dd3fc; text-decoration: none; }
+    a:hover { text-decoration: underline; color: #38bdf8; }
+    .layout { display: flex; min-height: 100vh; }
+    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
+    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    nav ul { list-style: none; padding: 4px 0; }
+    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
+    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; }
+    .status-done { color: #4ade80 !important; }
+    main { flex: 1; padding: 48px 56px; max-width: 900px; }
+    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+    .page-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; margin-top: 8px; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 99px; background: #1e293b; color: #94a3b8; }
+    .tag-date { background: #0c1a2e; color: #3b82f6; }
+    h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 40px 0 16px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+    h3 { font-size: 15px; font-weight: 600; color: #94a3b8; margin: 24px 0 10px; }
+    h4 { font-size: 13px; font-weight: 600; color: #64748b; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    p { font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
+    ul { padding-left: 0; list-style: none; }
+    ul li { font-size: 14px; color: #cbd5e1; padding: 3px 0; padding-left: 16px; position: relative; }
+    ul li::before { content: "–"; position: absolute; left: 0; color: #334155; }
+    ol { padding-left: 20px; }
+    ol li { font-size: 14px; color: #cbd5e1; padding: 3px 0; }
+    pre { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; }
+    code { font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #7dd3fc; }
+    pre code { color: #e2e8f0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .callout { background: #0c1a2e; border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 16px 0; font-size: 14px; color: #93c5fd; }
+    .section-num { color: #334155; font-size: 13px; font-weight: 400; margin-right: 6px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="nav-logo">System Design</div>
+    <div class="nav-section">Navigation</div>
+    <ul>
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="../_topic-roadmap.html">🗺 Topics</a></li>
+    </ul>
+    <div class="nav-section">Designs</div>
+    <ul>
+      <li><a href="url-shortener.html" class="active status-done">✓ URL Shortener</a></li>
+    </ul>
+    <div class="nav-section">Patterns</div>
+    <ul>
+      <li><a href="../patterns/caching.html">Caching</a></li>
+      <li><a href="../patterns/token-generation.html">Token Generation</a></li>
+      <li><a href="../patterns/database-selection.html">Database Selection</a></li>
+    </ul>
+    <div class="nav-section">Templates</div>
+    <ul>
+      <li><a href="../templates/design-template.html">Design Template</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>URL Shortener <span style="color:#4ade80;font-size:16px;">✓</span></h1>
+    <div class="page-meta">
+      <span class="tag tag-date">2026-05-25</span>
+      <span class="tag">Medium</span>
+      <span class="tag">read-heavy</span>
+      <span class="tag">caching</span>
+      <span class="tag">token generation</span>
+      <span class="tag">NoSQL</span>
+    </div>
+
+    <h2><span class="section-num">1.</span> Requirements</h2>
+
+    <h3>Functional</h3>
+    <ul>
+      <li>Given a long URL, generate a short URL (alias)</li>
+      <li>Given a short URL, redirect to the original long URL</li>
+      <li>Short URLs should be unique and not collide</li>
+      <li>Optional: custom aliases, expiration dates, analytics</li>
+    </ul>
+
+    <h3>Non-Functional</h3>
+    <ul>
+      <li><strong>High availability</strong> — redirects must always work</li>
+      <li><strong>Low latency</strong> — redirect &lt; 10 ms p99</li>
+      <li><strong>Durability</strong> — short URLs should not disappear</li>
+      <li>Read-heavy: ~100:1 read/write ratio</li>
+    </ul>
+
+    <h3>Out of Scope</h3>
+    <ul>
+      <li>User authentication</li>
+      <li>Full analytics dashboard</li>
+      <li>Link preview / safety scanning</li>
+    </ul>
+
+    <h2><span class="section-num">2.</span> Capacity Estimates</h2>
+    <table>
+      <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>New URLs per day</td><td>100 million</td></tr>
+        <tr><td>New URLs per second (write QPS)</td><td>~1,200</td></tr>
+        <tr><td>Redirect QPS (100× reads)</td><td>~120,000</td></tr>
+        <tr><td>URL record size</td><td>~500 bytes (long URL + metadata)</td></tr>
+        <tr><td>Storage for 10 years</td><td>100M × 365 × 10 × 500B ≈ 180 TB</td></tr>
+        <tr><td>Cache (top 20% → 80% traffic)</td><td>hot set fits in Redis (~1 TB/day active)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">Key insight: This is overwhelmingly read-heavy. Design around the read path.</div>
+
+    <h2><span class="section-num">3.</span> High-Level Design</h2>
+    <pre><code>Client
+  │
+  ▼
+[Load Balancer]
+  │              │
+  ▼              ▼
+[Write Service]  [Redirect Service]
+  │                    │
+  ▼                    ▼
+[Token Generator]   [Redis Cache]  ──miss──▶  [DB Read Replica]
+  │                                                │
+  ▼                                                │
+[DB Primary] ◀───────────────────────────────────┘</code></pre>
+
+    <h3>Write path</h3>
+    <ol>
+      <li>Client POSTs long URL</li>
+      <li>Write service calls token generator → gets a unique short code</li>
+      <li>Writes <code>{short_code → long_url, created_at, expiry}</code> to DB primary</li>
+      <li>Optionally pre-warms cache</li>
+      <li>Returns short URL to client</li>
+    </ol>
+
+    <h3>Read path (redirect)</h3>
+    <ol>
+      <li>Client GETs <code>tinyurl.com/abc123</code></li>
+      <li>Redirect service checks Redis cache first</li>
+      <li>Cache hit → 301/302 redirect immediately</li>
+      <li>Cache miss → query DB read replica → cache the result → redirect</li>
+    </ol>
+
+    <h2><span class="section-num">4.</span> Key Design Decisions</h2>
+
+    <h3>4.1 Short Code Length</h3>
+    <ul>
+      <li>Alphabet: base62 = <code>[a-z A-Z 0-9]</code> = 62 characters</li>
+      <li>7-character code: 62⁷ ≈ <strong>3.5 trillion</strong> unique codes</li>
+      <li>At 100M/day: covers <strong>~95 years</strong> before exhaustion</li>
+      <li>6 characters = 56 billion → only ~1.5 years. Use 7.</li>
+    </ul>
+
+    <h3>4.2 Token Generation Strategy</h3>
+    <p>See <a href="../patterns/token-generation.html">patterns/token-generation</a> for all approaches. For URL shortener:</p>
+    <p><strong>Chosen: Zookeeper-coordinated counter ranges</strong></p>
+    <ul>
+      <li>Each write server claims a range of counter values from Zookeeper (e.g., server A gets 1–1M)</li>
+      <li>Convert counter value to base62 → short code</li>
+      <li>Servers generate tokens locally within their range — zero DB coordination overhead</li>
+      <li>When range exhausted, claim new range from Zookeeper</li>
+    </ul>
+
+    <h4>Why not MD5/SHA hash?</h4>
+    <p>Hash of URL → take first 7 chars → collision risk + not human-stable. Same URL hashed twice = same code (good for dedup but complicates custom aliases).</p>
+
+    <h4>Why not UUID?</h4>
+    <p>128 bits → need to shorten anyway; introduces randomness we don't need.</p>
+
+    <h3>4.3 301 vs 302 Redirect</h3>
+    <table>
+      <thead><tr><th></th><th>301 Permanent</th><th>302 Temporary</th></tr></thead>
+      <tbody>
+        <tr><td>Browser caches?</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Analytics possible?</td><td>❌ browser skips server</td><td>✅ every redirect hits server</td></tr>
+        <tr><td>Server load</td><td>Lower</td><td>Higher</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>Decision:</strong> 302 if you need click analytics; 301 if you want to minimize server load.</div>
+
+    <h3>4.4 Database Choice</h3>
+    <p>See <a href="../patterns/database-selection.html">patterns/database-selection</a> for full framework.</p>
+    <pre><code>short_code  VARCHAR(7)   PRIMARY KEY
+long_url    TEXT
+user_id     BIGINT
+created_at  TIMESTAMP
+expires_at  TIMESTAMP    NULLABLE</code></pre>
+    <ul>
+      <li><strong>Postgres</strong> works for &lt; ~500M rows with proper indexing</li>
+      <li><strong>Cassandra</strong> at scale: partition key = <code>short_code</code> → O(1) lookup, multi-region replication, eventual consistency acceptable</li>
+    </ul>
+    <div class="callout"><strong>Decision:</strong> Start with Postgres. Migrate to Cassandra if write QPS or storage forces it.</div>
+
+    <h3>4.5 Caching</h3>
+    <p>See <a href="../patterns/caching.html">patterns/caching</a> for full strategies.</p>
+    <ul>
+      <li><strong>Strategy:</strong> Cache-aside on read path</li>
+      <li><strong>TTL:</strong> Match URL expiry, or 24h default for non-expiring URLs</li>
+      <li><strong>Eviction:</strong> LRU — naturally keeps hot links warm</li>
+      <li><strong>Cache stampede:</strong> Mutex lock on cache miss for the same key; or probabilistic early recompute</li>
+      <li><strong>Cache key:</strong> <code>short_code</code> → <code>long_url</code></li>
+    </ul>
+
+    <h2><span class="section-num">5.</span> Deep Dives</h2>
+
+    <h3>Custom Aliases</h3>
+    <ul>
+      <li>User specifies <code>tinyurl.com/my-brand</code></li>
+      <li>Write service checks availability first (<code>SELECT</code> on short_code)</li>
+      <li>Reserve these in same table; mark <code>is_custom = true</code></li>
+      <li>Risk: squatting → rate-limit custom alias creation</li>
+    </ul>
+
+    <h3>URL Expiration</h3>
+    <ul>
+      <li>Store <code>expires_at</code> in DB</li>
+      <li>Redirect service checks expiry before returning URL</li>
+      <li>Background job (cron) deletes/tombstones expired records</li>
+      <li>Cache TTL should be <code>min(24h, expires_at - now)</code></li>
+    </ul>
+
+    <h3>Analytics (if in scope)</h3>
+    <ul>
+      <li>Write click events asynchronously to Kafka</li>
+      <li>Downstream consumer aggregates into ClickHouse or similar OLAP store</li>
+      <li>Never block the redirect on analytics writes</li>
+    </ul>
+
+    <h2><span class="section-num">6.</span> Failure Modes & Mitigations</h2>
+    <table>
+      <thead><tr><th>Failure</th><th>Impact</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>DB primary down</td><td>Writes fail</td><td>Leader election / failover (Postgres streaming replication)</td></tr>
+        <tr><td>Cache down</td><td>All reads hit DB</td><td>DB read replicas; cache is optimization not dependency</td></tr>
+        <tr><td>Zookeeper down</td><td>New URL creation fails</td><td>Pre-fetched ranges allow ~1M URLs before blocking</td></tr>
+        <tr><td>Hash collision (if hash-based)</td><td>Wrong redirect</td><td>Check-on-write; retry with different hash seed</td></tr>
+      </tbody>
+    </table>
+
+    <h2><span class="section-num">7.</span> Key Takeaways</h2>
+    <ol>
+      <li><strong>Read-heavy → cache everything on the read path.</strong> Redis in front of DB is the single biggest win.</li>
+      <li><strong>Base62 + counter is cleaner than hashing</strong> for uniqueness guarantees at scale.</li>
+      <li><strong>Zookeeper range pre-fetch</strong> lets write servers operate independently — no lock contention.</li>
+      <li><strong>301 vs 302</strong> is a real trade-off interviewers notice. Know when you'd choose each.</li>
+      <li><strong>Cassandra's partition-key model</strong> is a perfect fit for pure key-value access.</li>
+      <li><strong>Separate write and redirect services</strong> — they have completely different scaling profiles.</li>
+    </ol>
+
+    <h2><span class="section-num">8.</span> Go Deeper</h2>
+    <ul>
+      <li>How would you handle a viral URL that suddenly gets 10M hits/min?</li>
+      <li>How would you implement URL preview (unfurl og:image) without slowing down the write path?</li>
+      <li>How would you shard the DB if short_code is the partition key but you also need queries by user_id?</li>
+      <li>Design the analytics system — how do you count unique visitors?</li>
+    </ul>
+  </main>
+</div>
+</body>
+</html>

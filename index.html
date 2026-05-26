@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
+    a { color: #7dd3fc; text-decoration: none; }
+    a:hover { text-decoration: underline; color: #38bdf8; }
+
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
+    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    nav ul { list-style: none; padding: 4px 0; }
+    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
+    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; background: #1e293b22; }
+    .status-done { color: #4ade80 !important; }
+    .status-todo { color: #64748b !important; }
+
+    /* Main */
+    main { flex: 1; padding: 48px 56px; max-width: 900px; }
+    h1 { font-size: 32px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .subtitle { color: #64748b; font-size: 15px; margin-bottom: 48px; }
+
+    /* Cards grid */
+    .section-title { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; margin-bottom: 16px; margin-top: 40px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: #161b27; border: 1px solid #1e293b; border-radius: 10px; padding: 20px 22px; transition: border-color 0.15s, transform 0.15s; }
+    .card:hover { border-color: #334155; transform: translateY(-2px); }
+    .card a { color: #e2e8f0; font-weight: 600; font-size: 15px; }
+    .card a:hover { text-decoration: none; color: #7dd3fc; }
+    .card .meta { font-size: 13px; color: #475569; margin-top: 6px; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 10px; }
+    .badge-done { background: #052e16; color: #4ade80; }
+    .badge-soon { background: #1e293b; color: #64748b; }
+
+    /* Numbers table */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #94a3b8; }
+    td:last-child { color: #7dd3fc; font-family: "SF Mono", "Fira Code", monospace; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="nav-logo">System Design</div>
+    <div class="nav-section">Navigation</div>
+    <ul>
+      <li><a href="index.html" class="active">🏠 Home</a></li>
+      <li><a href="_topic-roadmap.html">🗺 Topics</a></li>
+    </ul>
+    <div class="nav-section">Designs</div>
+    <ul>
+      <li><a href="designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
+    </ul>
+    <div class="nav-section">Patterns</div>
+    <ul>
+      <li><a href="patterns/caching.html">Caching</a></li>
+      <li><a href="patterns/token-generation.html">Token Generation</a></li>
+      <li><a href="patterns/database-selection.html">Database Selection</a></li>
+    </ul>
+    <div class="nav-section">Templates</div>
+    <ul>
+      <li><a href="templates/design-template.html">Design Template</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>System Design</h1>
+    <p class="subtitle">Deep dives, trade-offs, and patterns — built for understanding, not memorization.</p>
+
+    <div class="section-title">Designs</div>
+    <div class="cards">
+      <div class="card">
+        <a href="designs/url-shortener.html">URL Shortener</a>
+        <div class="meta">TinyURL / bit.ly · Read-heavy, caching, base62</div>
+        <span class="badge badge-done">✓ Published</span>
+      </div>
+    </div>
+
+    <div class="section-title">Coming Soon</div>
+    <div class="cards">
+      <div class="card"><a href="_topic-roadmap.html">Paste Bin</a><div class="meta">Text sharing</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Instagram</a><div class="meta">Photo sharing feed</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Twitter</a><div class="meta">Social media timeline</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">YouTube</a><div class="meta">Video streaming</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">WhatsApp</a><div class="meta">Chat system</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Uber</a><div class="meta">Ride-sharing, geolocation</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Rate Limiter</a><div class="meta">Token bucket, sliding window</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Web Crawler</a><div class="meta">Distributed crawling</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Notification System</a><div class="meta">Push, SMS, email fanout</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Search Autocomplete</a><div class="meta">Typeahead</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Distributed KV Store</a><div class="meta">Redis-style</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Distributed Cache</a><div class="meta">Redis-style</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Consistent Hashing</a><div class="meta">Deep dive</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Message Queue</a><div class="meta">Kafka-style</div><span class="badge badge-soon">Coming soon</span></div>
+      <div class="card"><a href="_topic-roadmap.html">Payment System</a><div class="meta">Idempotency, distributed txn</div><span class="badge badge-soon">Coming soon</span></div>
+    </div>
+
+    <div class="section-title">Patterns Reference</div>
+    <div class="cards">
+      <div class="card"><a href="patterns/caching.html">Caching Strategies</a><div class="meta">Cache-aside, write-through, stampede, CDN</div></div>
+      <div class="card"><a href="patterns/token-generation.html">Token / ID Generation</a><div class="meta">Base62, Snowflake, UUID, Zookeeper ranges</div></div>
+      <div class="card"><a href="patterns/database-selection.html">Database Selection</a><div class="meta">Postgres vs Cassandra vs Redis — decision framework</div></div>
+    </div>
+
+    <div class="section-title">Numbers to Know</div>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>L1 cache</td><td>~1 ns</td></tr>
+        <tr><td>L2 cache</td><td>~10 ns</td></tr>
+        <tr><td>RAM</td><td>~100 ns</td></tr>
+        <tr><td>SSD random read</td><td>~100 µs</td></tr>
+        <tr><td>HDD seek</td><td>~10 ms</td></tr>
+        <tr><td>Network round-trip (same DC)</td><td>~0.5 ms</td></tr>
+        <tr><td>Network round-trip (cross-region)</td><td>~150 ms</td></tr>
+        <tr><td>1 Gbps NIC throughput</td><td>~125 MB/s</td></tr>
+        <tr><td>Typical DB row</td><td>~1 KB</td></tr>
+        <tr><td>Typical tweet / short text</td><td>~280 bytes</td></tr>
+        <tr><td>Typical image (compressed)</td><td>~300 KB</td></tr>
+        <tr><td>Typical video (1 min, 720p)</td><td>~50 MB</td></tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+</body>
+</html>

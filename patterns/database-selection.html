@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Selection — System Design Patterns</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
+    a { color: #7dd3fc; text-decoration: none; }
+    a:hover { text-decoration: underline; color: #38bdf8; }
+    .layout { display: flex; min-height: 100vh; }
+    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
+    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    nav ul { list-style: none; padding: 4px 0; }
+    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
+    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; }
+    .status-done { color: #4ade80 !important; }
+    main { flex: 1; padding: 48px 56px; max-width: 900px; }
+    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .appears-in { font-size: 13px; color: #475569; margin-bottom: 36px; }
+    h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 40px 0 14px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+    h3 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 22px 0 8px; }
+    p { font-size: 14px; color: #cbd5e1; margin-bottom: 10px; }
+    ol { padding-left: 20px; margin-bottom: 12px; }
+    ol li { font-size: 14px; color: #cbd5e1; padding: 4px 0; }
+    ul { list-style: none; padding: 0; margin-bottom: 12px; }
+    ul li { font-size: 14px; color: #cbd5e1; padding: 3px 0 3px 16px; position: relative; }
+    ul li::before { content: "–"; position: absolute; left: 0; color: #334155; }
+    pre { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 10px 0 16px; font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #94a3b8; }
+    code { font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #7dd3fc; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #f1f5f9; font-weight: 500; white-space: nowrap; }
+    .callout { background: #0c1a2e; border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #93c5fd; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="nav-logo">System Design</div>
+    <div class="nav-section">Navigation</div>
+    <ul>
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="../_topic-roadmap.html">🗺 Topics</a></li>
+    </ul>
+    <div class="nav-section">Designs</div>
+    <ul>
+      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
+    </ul>
+    <div class="nav-section">Patterns</div>
+    <ul>
+      <li><a href="caching.html">Caching</a></li>
+      <li><a href="token-generation.html">Token Generation</a></li>
+      <li><a href="database-selection.html" class="active">Database Selection</a></li>
+    </ul>
+    <div class="nav-section">Templates</div>
+    <ul>
+      <li><a href="../templates/design-template.html">Design Template</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Pattern: Database Selection</h1>
+    <p class="appears-in">Appears in: Every system design — always discuss storage trade-offs</p>
+
+    <h2>The Decision Framework</h2>
+    <p>Ask these questions in order:</p>
+    <ol>
+      <li><strong>What is the access pattern?</strong> Key-value lookup? Range scan? Full-text search? Graph traversal?</li>
+      <li><strong>What are the consistency requirements?</strong> Strong consistency or eventual OK?</li>
+      <li><strong>What is the scale?</strong> Single node? Horizontal? Multi-region?</li>
+      <li><strong>What is the read/write ratio?</strong> Read-heavy → indexes + replicas. Write-heavy → LSM, partitioning.</li>
+      <li><strong>Do you need transactions?</strong> Multi-row ACID? Cross-shard?</li>
+    </ol>
+
+    <h2>Postgres (SQL / Relational)</h2>
+    <p><strong>Best for:</strong> Structured data with relationships, ACID transactions, complex queries, moderate scale</p>
+    <table>
+      <thead><tr><th>Strength</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>ACID transactions</td><td>Safe for financial data, inventory, anything requiring atomicity</td></tr>
+        <tr><td>Flexible querying</td><td>JOINs, aggregations, subqueries — no schema pre-planning needed</td></tr>
+        <tr><td>Mature ecosystem</td><td>pgvector, PostGIS, JSON support, rich extension library</td></tr>
+        <tr><td>Read replicas</td><td>Streaming replication for read scale-out</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Weaknesses:</strong> Horizontal write scaling requires sharding (adds complexity). Schema migrations at scale are painful.</p>
+    <div class="callout"><strong>Rule of thumb:</strong> Start here unless you have a clear reason not to. &lt; 500M rows + moderate QPS = Postgres is fine.</div>
+
+    <h2>Cassandra (Wide-Column / NoSQL)</h2>
+    <p><strong>Best for:</strong> Write-heavy, globally distributed, time-series, pure key-value at massive scale</p>
+    <table>
+      <thead><tr><th>Strength</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Horizontal scaling</td><td>Add nodes linearly; no primary bottleneck</td></tr>
+        <tr><td>Write throughput</td><td>LSM-tree writes to memory (MemTable) first → very fast</td></tr>
+        <tr><td>Multi-region</td><td>Built-in multi-master replication across DCs</td></tr>
+        <tr><td>Tunable consistency</td><td>Per-query: ONE, QUORUM, ALL</td></tr>
+        <tr><td>Time-series native</td><td>Wide rows model fits (user_id, timestamp) patterns</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Weaknesses:</strong> No JOINs — must denormalize; one table per query pattern. No multi-row transactions. Data model design is query-driven — harder to evolve. Eventual consistency by default.</p>
+    <p><strong>When to choose Cassandra:</strong> Write QPS &gt; 10K/s sustained. Data fits partition key → clustering key → value. Multi-region is a hard requirement. You can live with eventual consistency.</p>
+    <div class="callout"><strong>URL Shortener fit:</strong> <code>short_code</code> as partition key, pure key-value → perfect Cassandra use case.</div>
+
+    <h2>Redis (In-Memory / Cache + Data Structure Store)</h2>
+    <p><strong>Best for:</strong> Caching, sessions, pub/sub, leaderboards, counters, queues</p>
+    <table>
+      <thead><tr><th>Strength</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Sub-millisecond latency</td><td>All operations in-memory</td></tr>
+        <tr><td>Rich data structures</td><td>Sorted sets, streams, hyperloglogs, bloom filters</td></tr>
+        <tr><td>Atomic operations</td><td>INCR, LPUSH, etc. — race-condition-free counters</td></tr>
+        <tr><td>TTL support</td><td>Native expiry on any key</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Weaknesses:</strong> Memory-limited. Persistence optional — not a true DB replacement. Single-threaded command execution.</p>
+    <p><strong>Use as:</strong> Cache layer in front of any DB, session store, rate-limit counter, distributed lock (Redlock), real-time leaderboard.</p>
+
+    <h2>DynamoDB (Managed Key-Value / Document)</h2>
+    <p><strong>Best for:</strong> Serverless, AWS-native, unpredictable traffic (auto-scaling), simple access patterns</p>
+    <table>
+      <thead><tr><th>Strength</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Fully managed</td><td>No ops burden</td></tr>
+        <tr><td>Auto-scaling</td><td>Handles traffic spikes automatically</td></tr>
+        <tr><td>DynamoDB Streams</td><td>CDC for downstream consumers</td></tr>
+        <tr><td>Global Tables</td><td>Multi-region replication</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Weaknesses:</strong> Expensive at high sustained throughput. Query flexibility limited to partition + sort key. Vendor lock-in.</p>
+
+    <h2>Elasticsearch / OpenSearch</h2>
+    <p><strong>Best for:</strong> Full-text search, log analytics, faceted search</p>
+    <ul>
+      <li>Inverted index → fast text search across millions of documents</li>
+      <li>Not a primary DB — typically used alongside Postgres/Cassandra as a search index</li>
+      <li>Eventual consistency; not ACID</li>
+      <li>Use for: product search, log/event analytics, autocomplete</li>
+    </ul>
+
+    <h2>ClickHouse / OLAP Stores</h2>
+    <p><strong>Best for:</strong> Analytics queries over billions of rows (aggregations, GROUP BY, time-series analytics)</p>
+    <ul>
+      <li>Columnar storage → reads only needed columns</li>
+      <li>Excellent for: "count clicks per URL per day", "top 10 URLs by country"</li>
+      <li>Not for transactional workloads</li>
+      <li>Write in bulk (batch insert); real-time inserts degrade performance</li>
+    </ul>
+
+    <h2>Sharding Strategies</h2>
+
+    <h3>Range Sharding</h3>
+    <pre>Shard 1: user_id 0–1M
+Shard 2: user_id 1M–2M
+...</pre>
+    <ul>
+      <li><strong>Pros:</strong> Simple; range queries stay on one shard</li>
+      <li><strong>Cons:</strong> Hot spots (newest users get all traffic)</li>
+    </ul>
+
+    <h3>Hash Sharding</h3>
+    <pre>shard = hash(user_id) % num_shards</pre>
+    <ul>
+      <li><strong>Pros:</strong> Even distribution</li>
+      <li><strong>Cons:</strong> Range queries span all shards; resharding requires data migration</li>
+    </ul>
+
+    <h3>Consistent Hashing</h3>
+    <ul>
+      <li>Virtual nodes on a ring → each node owns a range</li>
+      <li>Add/remove nodes: only adjacent ranges affected</li>
+      <li><strong>Use when:</strong> Cache clusters, distributed KV stores, Cassandra (uses this internally)</li>
+    </ul>
+
+    <h3>Directory-Based Sharding</h3>
+    <ul>
+      <li>Lookup table maps entity → shard</li>
+      <li><strong>Pros:</strong> Flexible; can move data without re-hashing</li>
+      <li><strong>Cons:</strong> Lookup table is a bottleneck/SPOF if not cached</li>
+    </ul>
+
+    <h2>Replication Patterns</h2>
+    <table>
+      <thead><tr><th>Pattern</th><th>How</th><th>Use case</th></tr></thead>
+      <tbody>
+        <tr><td>Leader-Follower</td><td>Writes to leader, replicas sync async</td><td>Most common; reads scale-out; leader is write bottleneck</td></tr>
+        <tr><td>Multi-Leader</td><td>Multiple write nodes</td><td>Multi-region writes; conflict resolution complexity</td></tr>
+        <tr><td>Leaderless (Quorum)</td><td>Write to W nodes, read from R nodes; W+R &gt; N</td><td>Cassandra, DynamoDB; no SPOF; tunable consistency</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Quick Decision Table</h2>
+    <table>
+      <thead><tr><th>Scenario</th><th>Pick</th></tr></thead>
+      <tbody>
+        <tr><td>Financial transactions, complex queries</td><td>Postgres</td></tr>
+        <tr><td>High-write, time-series, multi-region</td><td>Cassandra</td></tr>
+        <tr><td>Caching, sessions, real-time counters</td><td>Redis</td></tr>
+        <tr><td>Full-text search</td><td>Elasticsearch</td></tr>
+        <tr><td>Analytics over billions of rows</td><td>ClickHouse</td></tr>
+        <tr><td>Serverless / AWS / variable traffic</td><td>DynamoDB</td></tr>
+        <tr><td>Graph relationships</td><td>Neo4j</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Key Points</h2>
+    <ul>
+      <li>Never just say "I'll use MySQL" or "I'll use NoSQL" without justification</li>
+      <li>Walk through the framework: access pattern → consistency → scale → transactions</li>
+      <li>Mention that you'd start with Postgres and only move to Cassandra when scale demands it</li>
+      <li>Discuss sharding only when the data outgrows a single node — don't prematurely optimize</li>
+      <li>Interviewers love hearing: "I'd add a Redis cache in front of the DB for the read path"</li>
+    </ul>
+  </main>
+</div>
+</body>
+</html>

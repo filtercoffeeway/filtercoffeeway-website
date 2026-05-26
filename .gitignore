@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Claude context (private, not for publishing)
+_claude-context.md
+CLAUDE.md

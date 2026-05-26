@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caching — System Design Patterns</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
+    a { color: #7dd3fc; text-decoration: none; }
+    a:hover { text-decoration: underline; color: #38bdf8; }
+    .layout { display: flex; min-height: 100vh; }
+    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
+    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    nav ul { list-style: none; padding: 4px 0; }
+    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
+    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; }
+    .status-done { color: #4ade80 !important; }
+    main { flex: 1; padding: 48px 56px; max-width: 900px; }
+    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .appears-in { font-size: 13px; color: #475569; margin-bottom: 36px; }
+    .appears-in a { color: #7dd3fc; }
+    h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 40px 0 16px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+    h3 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 24px 0 8px; }
+    p { font-size: 14px; color: #cbd5e1; margin-bottom: 10px; }
+    ul { list-style: none; padding: 0; margin-bottom: 12px; }
+    ul li { font-size: 14px; color: #cbd5e1; padding: 3px 0 3px 16px; position: relative; }
+    ul li::before { content: "–"; position: absolute; left: 0; color: #334155; }
+    pre { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 10px 0 16px; font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #94a3b8; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #f1f5f9; font-weight: 600; white-space: nowrap; }
+    .callout { background: #0c1a2e; border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #93c5fd; }
+    .tip-list { margin: 0; }
+    .tip-list li { padding: 5px 0 5px 16px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="nav-logo">System Design</div>
+    <div class="nav-section">Navigation</div>
+    <ul>
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="../_topic-roadmap.html">🗺 Topics</a></li>
+    </ul>
+    <div class="nav-section">Designs</div>
+    <ul>
+      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
+    </ul>
+    <div class="nav-section">Patterns</div>
+    <ul>
+      <li><a href="caching.html" class="active">Caching</a></li>
+      <li><a href="token-generation.html">Token Generation</a></li>
+      <li><a href="database-selection.html">Database Selection</a></li>
+    </ul>
+    <div class="nav-section">Templates</div>
+    <ul>
+      <li><a href="../templates/design-template.html">Design Template</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Pattern: Caching</h1>
+    <p class="appears-in">Appears in: <a href="../designs/url-shortener.html">URL Shortener</a>, feed systems, CDN design, any read-heavy system</p>
+
+    <h2>Caching Strategies</h2>
+
+    <h3>1. Cache-Aside (Lazy Loading)</h3>
+    <pre>App → check cache → hit: return
+                  → miss: read DB → write to cache → return</pre>
+    <ul>
+      <li><strong>Pros:</strong> Only caches what's actually read; cache failure doesn't break reads</li>
+      <li><strong>Cons:</strong> First request always misses (cold start); stale data possible</li>
+      <li><strong>Use when:</strong> Read-heavy, unpredictable access patterns</li>
+    </ul>
+
+    <h3>2. Write-Through</h3>
+    <pre>App → write to cache AND DB simultaneously</pre>
+    <ul>
+      <li><strong>Pros:</strong> Cache always consistent with DB; no cold start on reads</li>
+      <li><strong>Cons:</strong> Write latency higher; cache fills with data that may never be read</li>
+      <li><strong>Use when:</strong> Write-heavy but every written item will likely be read soon</li>
+    </ul>
+
+    <h3>3. Write-Behind (Write-Back)</h3>
+    <pre>App → write to cache → return immediately
+Cache → async flush to DB (batched)</pre>
+    <ul>
+      <li><strong>Pros:</strong> Very fast writes; good for burst workloads</li>
+      <li><strong>Cons:</strong> Data loss risk if cache crashes before flush; complex to implement</li>
+      <li><strong>Use when:</strong> High write throughput, tolerable eventual persistence (shopping cart, counters)</li>
+    </ul>
+
+    <h3>4. Read-Through</h3>
+    <pre>App → check cache → miss: cache itself fetches from DB → returns to app</pre>
+    <ul>
+      <li><strong>Pros:</strong> Cache manages DB fallback; simpler app code</li>
+      <li><strong>Cons:</strong> First read always misses; cache must know DB schema</li>
+      <li><strong>Use when:</strong> You want caching logic centralized (Redis + modules, Memcached + proxy)</li>
+    </ul>
+
+    <h2>Cache Stampede (Thundering Herd)</h2>
+    <p><strong>Problem:</strong> A popular cached item expires. 10,000 simultaneous requests all miss → all hit DB simultaneously.</p>
+    <table>
+      <thead><tr><th>Solution</th><th>How</th><th>Trade-off</th></tr></thead>
+      <tbody>
+        <tr><td>Mutex / lock</td><td>First thread to miss acquires lock, fetches DB, populates cache; others wait</td><td>Serializes misses; adds latency on expiry</td></tr>
+        <tr><td>Probabilistic early recompute</td><td>Before TTL expires, randomly recompute based on proximity to expiry</td><td>Small chance of unnecessary recompute; no lock needed</td></tr>
+        <tr><td>Stale-while-revalidate</td><td>Return stale value immediately; recompute in background</td><td>Brief stale data acceptable; zero extra latency</td></tr>
+        <tr><td>Jitter on TTL</td><td>Randomize TTL (base_ttl ± jitter) to spread expiry</td><td>Prevents synchronized mass expiry</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>Recommended default:</strong> Mutex for correctness-sensitive data; stale-while-revalidate for best UX.</div>
+
+    <h2>Eviction Policies</h2>
+    <table>
+      <thead><tr><th>Policy</th><th>Behavior</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td>LRU</td><td>Evict item not accessed longest</td><td>General-purpose; temporal locality</td></tr>
+        <tr><td>LFU</td><td>Evict item accessed fewest times</td><td>Stable hot-set (celebrity profiles, trending pages)</td></tr>
+        <tr><td>TTL</td><td>Evict after fixed time regardless of access</td><td>Data freshness requirements (prices, inventory)</td></tr>
+        <tr><td>FIFO</td><td>Evict oldest inserted item</td><td>Simple; rarely best choice</td></tr>
+        <tr><td>Random</td><td>Evict random item</td><td>Surprisingly effective at scale; avoids LRU's worst cases</td></tr>
+      </tbody>
+    </table>
+    <p>Redis default: LRU (with approximate algorithm for performance). Can configure LFU in Redis 4+.</p>
+
+    <h2>Redis vs Memcached</h2>
+    <table>
+      <thead><tr><th></th><th>Redis</th><th>Memcached</th></tr></thead>
+      <tbody>
+        <tr><td>Data structures</td><td>Strings, Lists, Sets, Sorted Sets, Hashes, Streams</td><td>Strings only</td></tr>
+        <tr><td>Persistence</td><td>RDB snapshots + AOF</td><td>None</td></tr>
+        <tr><td>Replication</td><td>Built-in leader-follower</td><td>External (e.g., mcrouter)</td></tr>
+        <tr><td>Clustering</td><td>Redis Cluster (built-in)</td><td>Client-side sharding only</td></tr>
+        <tr><td>Pub/Sub</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Multi-threading</td><td>Single-threaded (I/O multiplexed)</td><td>Multi-threaded</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>In practice:</strong> Redis is almost always the right default. Choose Memcached only for pure string caching at very high throughput with many cores where memory efficiency matters most.</div>
+
+    <h2>CDN Caching</h2>
+    <h3>Push vs Pull</h3>
+    <table>
+      <thead><tr><th></th><th>Push CDN</th><th>Pull CDN</th></tr></thead>
+      <tbody>
+        <tr><td>How</td><td>You upload content to CDN proactively</td><td>CDN fetches from origin on first miss</td></tr>
+        <tr><td>Best for</td><td>Known-static content (JS, CSS, videos)</td><td>Dynamic-ish content (user avatars, thumbnails)</td></tr>
+        <tr><td>Stale risk</td><td>Low (you control upload)</td><td>Higher (TTL-based expiry)</td></tr>
+        <tr><td>Complexity</td><td>Higher (must manage uploads)</td><td>Lower</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Cache Invalidation</h3>
+    <ul>
+      <li><strong>TTL-based:</strong> Set <code>Cache-Control: max-age=N</code> — simple but lag before update reflects</li>
+      <li><strong>Versioned URLs:</strong> <code>/static/bundle.v3.js</code> — change URL = instant cache busting, no invalidation needed</li>
+      <li><strong>Purge API:</strong> CloudFront/Fastly APIs to invalidate by URL or tag — use for urgent content fixes</li>
+    </ul>
+
+    <h2>Key Numbers</h2>
+    <table>
+      <thead><tr><th>Tier</th><th>Latency</th></tr></thead>
+      <tbody>
+        <tr><td>Redis GET (same DC)</td><td>~0.1 ms</td></tr>
+        <tr><td>Memcached GET (same DC)</td><td>~0.05 ms</td></tr>
+        <tr><td>DB read (Postgres, indexed)</td><td>~1–5 ms</td></tr>
+        <tr><td>DB read (Cassandra)</td><td>~1–3 ms</td></tr>
+        <tr><td>CDN edge cache hit</td><td>~5–20 ms</td></tr>
+        <tr><td>CDN miss (origin fetch)</td><td>~50–200 ms</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Key Points</h2>
+    <ul class="tip-list">
+      <li>Always state <strong>why</strong> you're caching — what the bottleneck is</li>
+      <li>Specify the <strong>strategy</strong> (cache-aside is most common; say it explicitly)</li>
+      <li>Discuss <strong>TTL</strong> and <strong>invalidation</strong> — interviewers love seeing you think about staleness</li>
+      <li>Mention <strong>stampede</strong> for any viral/high-traffic scenario</li>
+      <li>For write-heavy systems, consider whether caching even helps — often it doesn't; look at write-through or message queues instead</li>
+    </ul>
+  </main>
+</div>
+</body>
+</html>

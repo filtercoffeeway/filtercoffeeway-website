@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token / ID Generation — System Design Patterns</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
+    a { color: #7dd3fc; text-decoration: none; }
+    a:hover { text-decoration: underline; color: #38bdf8; }
+    .layout { display: flex; min-height: 100vh; }
+    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
+    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    nav ul { list-style: none; padding: 4px 0; }
+    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
+    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; }
+    .status-done { color: #4ade80 !important; }
+    main { flex: 1; padding: 48px 56px; max-width: 900px; }
+    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .appears-in { font-size: 13px; color: #475569; margin-bottom: 36px; }
+    .appears-in a { color: #7dd3fc; }
+    h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 40px 0 14px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+    h3 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 22px 0 8px; }
+    p { font-size: 14px; color: #cbd5e1; margin-bottom: 10px; }
+    ul { list-style: none; padding: 0; margin-bottom: 12px; }
+    ul li { font-size: 14px; color: #cbd5e1; padding: 3px 0 3px 16px; position: relative; }
+    ul li::before { content: "–"; position: absolute; left: 0; color: #334155; }
+    pre { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 10px 0 16px; font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #94a3b8; }
+    code { font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #7dd3fc; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #f1f5f9; font-weight: 500; }
+    .callout { background: #0c1a2e; border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #93c5fd; }
+    .recommended { background: #052e16; border-left: 3px solid #4ade80; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #86efac; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="nav-logo">System Design</div>
+    <div class="nav-section">Navigation</div>
+    <ul>
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="../_topic-roadmap.html">🗺 Topics</a></li>
+    </ul>
+    <div class="nav-section">Designs</div>
+    <ul>
+      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
+    </ul>
+    <div class="nav-section">Patterns</div>
+    <ul>
+      <li><a href="caching.html">Caching</a></li>
+      <li><a href="token-generation.html" class="active">Token Generation</a></li>
+      <li><a href="database-selection.html">Database Selection</a></li>
+    </ul>
+    <div class="nav-section">Templates</div>
+    <ul>
+      <li><a href="../templates/design-template.html">Design Template</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Pattern: Token / ID Generation</h1>
+    <p class="appears-in">Appears in: <a href="../designs/url-shortener.html">URL Shortener</a>, Order IDs, Session tokens, Distributed primary keys, Idempotency keys</p>
+
+    <h2>The Problem</h2>
+    <p>Distributed systems need unique IDs generated across multiple nodes with no coordination overhead. Requirements typically include:</p>
+    <ul>
+      <li><strong>Uniqueness</strong> — no collisions, ever</li>
+      <li><strong>Speed</strong> — millions per second without DB round-trips</li>
+      <li><strong>Optionally sortable</strong> — time-ordered IDs enable range scans</li>
+      <li><strong>Short / URL-safe</strong> — for human-facing tokens</li>
+    </ul>
+
+    <h2>Approach 1: Database Auto-Increment</h2>
+    <pre>INSERT INTO urls (...) → returns BIGINT auto_increment id</pre>
+    <ul>
+      <li><strong>Pros:</strong> Simple, unique, sortable</li>
+      <li><strong>Cons:</strong> Single point of failure; write bottleneck; exposes record count</li>
+      <li><strong>Use when:</strong> Single-node, low write volume</li>
+    </ul>
+
+    <h2>Approach 2: UUID v4 (Random)</h2>
+    <pre>550e8400-e29b-41d4-a716-446655440000</pre>
+    <ul>
+      <li><strong>Pros:</strong> Trivially unique; no coordination; well-supported</li>
+      <li><strong>Cons:</strong> 128 bits = long; not sortable; random = poor index locality (B-tree fragmentation)</li>
+      <li><strong>Use when:</strong> Session tokens, API keys where length doesn't matter</li>
+    </ul>
+
+    <h2>Approach 3: UUID v7 (Time-ordered)</h2>
+    <pre>018e-xxxx-xxxx-xxxx-xxxxxxxxxxxx  (48-bit timestamp prefix)</pre>
+    <ul>
+      <li><strong>Pros:</strong> Unique + time-sortable; good for DB indexes; no coordination</li>
+      <li><strong>Cons:</strong> Still 128 bits; UUID v7 is a newer spec (check library support)</li>
+      <li><strong>Use when:</strong> DB primary keys where you want insert locality without custom infra</li>
+    </ul>
+
+    <h2>Approach 4: Snowflake ID (Twitter)</h2>
+    <pre>[41-bit timestamp ms] [10-bit machine ID] [12-bit sequence]
+= 64-bit integer</pre>
+    <ul>
+      <li><strong>Pros:</strong> Globally unique; sortable by time; compact (64-bit); ~4096 IDs/ms/node</li>
+      <li><strong>Cons:</strong> Requires machine ID assignment; clock skew can cause issues</li>
+      <li><strong>Use when:</strong> High-throughput distributed systems (tweets, orders, events)</li>
+    </ul>
+    <p><strong>Variants:</strong> Sonyflake (Sony): 39-bit timestamp (10ms resolution) + 16-bit sequence + 8-bit machine. Instagram's approach: Postgres sequence per shard + timestamp + shard ID.</p>
+
+    <h2>Approach 5: MD5 / SHA Hash of Content</h2>
+    <pre>short_code = base62(SHA256(long_url))[:7]</pre>
+    <ul>
+      <li><strong>Pros:</strong> Deterministic — same URL always gets same code (natural dedup)</li>
+      <li><strong>Cons:</strong> Collision risk for first N chars; can't guarantee uniqueness without check; not sequential</li>
+      <li><strong>Use when:</strong> Content-addressable storage, dedup is a primary requirement</li>
+    </ul>
+    <p><strong>Collision handling:</strong> On write: <code>INSERT ... ON CONFLICT</code> or check-then-insert. On collision: append salt, re-hash, retry.</p>
+
+    <h2>Approach 6: Counter + Base62 Encoding ✅</h2>
+    <div class="recommended">Recommended for URL Shortener and similar human-facing token scenarios.</div>
+    <pre>counter = 1000000
+base62(1000000) = "4c92"  →  7-char short code</pre>
+    <p><strong>Base62 alphabet:</strong> <code>a-z A-Z 0-9</code> (62 chars)</p>
+    <table>
+      <thead><tr><th>Chars</th><th>Max values</th><th>Coverage at 100M/day</th></tr></thead>
+      <tbody>
+        <tr><td>6</td><td>56 billion</td><td>~1.5 years</td></tr>
+        <tr><td>7</td><td>3.5 trillion</td><td>~95 years ✓</td></tr>
+        <tr><td>8</td><td>218 trillion</td><td>~5,800 years</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Counter Sources</h3>
+    <table>
+      <thead><tr><th>Method</th><th>How</th><th>Trade-off</th></tr></thead>
+      <tbody>
+        <tr><td>Single DB sequence</td><td><code>SELECT nextval('url_seq')</code></td><td>Simple; DB bottleneck</td></tr>
+        <tr><td>Redis INCR</td><td>Atomic increment</td><td>Fast; single Redis = SPOF without clustering</td></tr>
+        <tr><td>Zookeeper ranges</td><td>Each server claims range (e.g., 1M–2M)</td><td>No coordination per ID; Zookeeper only needed for range claims</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>Best choice:</strong> Zookeeper (or etcd) range pre-fetch. Servers generate IDs locally within their claimed range. Claim a new range only when exhausted.</div>
+
+    <h2>Approach 7: Pre-generated Token Pool</h2>
+    <pre>Background job generates N random tokens
+Stores in "available" table
+Write service pops one atomically</pre>
+    <ul>
+      <li><strong>Pros:</strong> Write service has zero generation logic; easy to scale</li>
+      <li><strong>Cons:</strong> Complex background job; token pool size to manage; "used" vs "available" state</li>
+      <li><strong>Use when:</strong> Tokens need to be guaranteed-random (not sequential) and pre-validation is useful</li>
+    </ul>
+
+    <h2>Base62 Implementation Reference</h2>
+    <pre>ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+BASE = 62
+
+def encode(num: int) -> str:
+    if num == 0:
+        return ALPHABET[0]
+    result = []
+    while num:
+        result.append(ALPHABET[num % BASE])
+        num //= BASE
+    return ''.join(reversed(result))
+
+def decode(s: str) -> int:
+    result = 0
+    for char in s:
+        result = result * BASE + ALPHABET.index(char)
+    return result</pre>
+
+    <h2>Decision Framework</h2>
+    <table>
+      <thead><tr><th>Requirement</th><th>Best approach</th></tr></thead>
+      <tbody>
+        <tr><td>Human-readable + short</td><td>Base62 counter</td></tr>
+        <tr><td>Time-sortable + compact</td><td>Snowflake / UUID v7</td></tr>
+        <tr><td>No coordination at all</td><td>UUID v4</td></tr>
+        <tr><td>Deterministic from content</td><td>Hash (SHA/MD5) + truncate</td></tr>
+        <tr><td>Pre-validated randomness</td><td>Token pool</td></tr>
+        <tr><td>Simplest possible</td><td>DB auto-increment</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Key Points</h2>
+    <ul>
+      <li>For URL Shortener: always go Counter + Base62 — explain why hashing risks collisions</li>
+      <li>Mention Zookeeper/etcd for range coordination — shows distributed systems fluency</li>
+      <li>Know 62⁷ ≈ 3.5 trillion and that 7 chars covers decades at scale</li>
+      <li>Snowflake is worth knowing for any "generate unique IDs at scale" question</li>
+      <li>Always discuss: will sequential IDs expose business metrics? — sometimes a security consideration to use random instead</li>
+    </ul>
+  </main>
+</div>
+</body>
+</html>
