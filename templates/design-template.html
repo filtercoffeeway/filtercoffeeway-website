@@ -3,204 +3,390 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Design Template — System Design</title>
+  <title>[TOPIC NAME] — System Design &amp; Trade-offs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
+    :root {
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
+      --rule-2:      #d6c5a4;
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
+      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
-    a { color: #7dd3fc; text-decoration: none; }
-    a:hover { text-decoration: underline; color: #38bdf8; }
-    .layout { display: flex; min-height: 100vh; }
-    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
-    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
-    nav ul { list-style: none; padding: 4px 0; }
-    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
-    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
-    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; }
-    .status-done { color: #4ade80 !important; }
-    main { flex: 1; padding: 48px 56px; max-width: 900px; }
-    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
-    .page-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 36px; }
-    .tag { display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 99px; background: #1e293b; color: #64748b; border: 1px dashed #334155; }
-    h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 40px 0 14px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
-    h3 { font-size: 15px; font-weight: 600; color: #94a3b8; margin: 20px 0 8px; }
-    p { font-size: 14px; color: #64748b; margin-bottom: 10px; font-style: italic; }
-    ul { list-style: none; padding: 0; margin-bottom: 12px; }
-    ul li { font-size: 14px; color: #475569; padding: 4px 0 4px 16px; position: relative; border-bottom: 1px dashed #1e293b; }
-    ul li::before { content: "○"; position: absolute; left: 0; color: #334155; font-size: 11px; top: 6px; }
-    pre { background: #0d1117; border: 1px dashed #1e293b; border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 10px 0 16px; font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #334155; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
-    th { text-align: left; padding: 8px 12px; background: #161b27; color: #475569; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; border: 1px dashed #1e293b; }
-    td { padding: 8px 12px; border: 1px dashed #1e293b; color: #334155; vertical-align: top; font-style: italic; }
-    td:first-child { color: #475569; font-style: normal; }
-    .callout { background: #0f1117; border: 1px dashed #334155; border-radius: 8px; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #334155; font-style: italic; }
-    .section-num { color: #1e293b; font-size: 13px; font-weight: 400; margin-right: 6px; }
-    .instruction { font-size: 12px; color: #334155; background: #161b27; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 12px; margin-bottom: 16px; font-style: normal; }
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body {
+      font-family: var(--sans); background: var(--paper); color: var(--ink);
+      line-height: 1.6; font-size: 16px;
+      background-image:
+        radial-gradient(rgba(168,90,42,0.035) 1px, transparent 1px),
+        radial-gradient(rgba(43,29,18,0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 37px 37px;
+      background-position: 0 0, 11px 13px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--ink); }
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+
+    .masthead { padding: 22px 0 16px; border-bottom: 1px solid var(--rule); }
+    .masthead-row { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .wordmark { font-family: var(--serif); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; color: var(--ink); }
+    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
+    .wordmark-sub { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-top: 4px; }
+    .masthead nav { display: flex; gap: 26px; flex-wrap: wrap; font-size: 13px; font-weight: 500; }
+    .masthead nav a { color: var(--ink-2); letter-spacing: 0.02em; border-bottom: 1px solid transparent; padding-bottom: 2px; transition: color .15s, border-color .15s; }
+    .masthead nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+    .issue-strip { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-3); }
+
+    article { max-width: 840px; margin: 0 auto; }
+
+    /* Article header */
+    .article-header { padding: 56px 0 40px; border-bottom: 1px solid var(--rule); margin-bottom: 48px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; display: inline-flex; align-items: center; gap: 10px; }
+    .kicker::before { content: ""; width: 28px; height: 1px; background: var(--accent); }
+    .article-title { font-family: var(--serif); font-weight: 700; font-size: clamp(36px, 4.5vw, 56px); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink); margin: 8px 0 16px; }
+    .article-title em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .article-dek { font-family: var(--serif); font-weight: 300; font-style: italic; font-size: 21px; line-height: 1.4; color: var(--ink-2); max-width: 56ch; margin-bottom: 28px; }
+    .byline { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; align-items: center; }
+    .byline .sep { color: var(--rule-2); }
+    .byline .tag { font-size: 11px; padding: 2px 9px; border: 1px solid var(--rule-2); border-radius: 99px; color: var(--ink-2); background: var(--paper-2); }
+
+    /* Stat block (remove if no anchor numbers) */
+    .stat-block { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 6px; padding: 28px 30px; box-shadow: var(--shadow); position: relative; margin-bottom: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0; }
+    .stat-block::before { content: "AT A GLANCE"; position: absolute; top: -9px; left: 22px; background: var(--paper); padding: 0 10px; font-size: 10px; letter-spacing: 0.24em; color: var(--accent); font-weight: 600; }
+    .stat { display: flex; flex-direction: column; padding: 14px 20px 14px 0; border-right: 1px dashed var(--rule); gap: 6px; }
+    .stat:last-child { border-right: none; padding-right: 0; }
+    .stat:first-child { padding-left: 0; }
+    .stat-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+    .stat-value { font-family: var(--serif); font-weight: 600; font-size: 26px; color: var(--ink); letter-spacing: -0.01em; line-height: 1; }
+    .stat-value .unit { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-3); margin-left: 3px; letter-spacing: 0.04em; }
+
+    /* Section headings */
+    .section-h2 { font-family: var(--serif); font-weight: 600; font-size: 28px; letter-spacing: -0.015em; color: var(--ink); margin: 56px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+    .section-h2 .section-num { font-family: var(--serif); font-style: italic; font-weight: 300; font-size: 18px; color: var(--accent); margin-right: 10px; }
+
+    /* Prose */
+    article p { font-size: 16px; line-height: 1.75; color: var(--ink-2); margin: 0 0 18px; max-width: 62ch; }
+    article h3 { font-family: var(--serif); font-weight: 600; font-size: 20px; color: var(--ink); margin: 32px 0 12px; letter-spacing: -0.01em; }
+    article h4 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin: 24px 0 10px; }
+    article ul, article ol { margin: 0 0 18px 0; padding-left: 0; list-style: none; max-width: 62ch; }
+    article ul li, article ol li { position: relative; padding: 4px 0 4px 22px; font-size: 16px; line-height: 1.7; color: var(--ink-2); }
+    article ul li::before { content: "—"; position: absolute; left: 0; color: var(--accent-soft); font-weight: 500; }
+    article ol { counter-reset: olist; }
+    article ol li { counter-increment: olist; }
+    article ol li::before { content: counter(olist) "."; position: absolute; left: 0; color: var(--accent); font-family: var(--serif); font-weight: 500; font-size: 14px; }
+    article strong { color: var(--ink); font-weight: 600; }
+    article em { font-style: italic; color: var(--ink); }
+    code { font-family: var(--mono); font-size: 13.5px; color: var(--accent); background: var(--paper-3); padding: 1px 6px; border-radius: 3px; }
+
+    pre { background: var(--paper-3); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; overflow-x: auto; margin: 16px 0 24px; line-height: 1.55; }
+    pre code { color: var(--ink); background: transparent; padding: 0; font-size: 13.5px; }
+
+    article table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14.5px; }
+    article th { text-align: left; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); padding: 10px 14px; background: var(--paper-2); border-bottom: 1px solid var(--rule-2); }
+    article td { padding: 12px 14px; border-bottom: 1px solid var(--rule); color: var(--ink-2); vertical-align: top; }
+    article tr:last-child td { border-bottom: none; }
+    article td:first-child { color: var(--ink); font-weight: 500; }
+
+    .callout { border-left: 3px solid var(--accent); background: var(--paper-2); border-radius: 0 6px 6px 0; padding: 14px 20px; margin: 20px 0 24px; font-size: 14.5px; line-height: 1.65; color: var(--ink-2); max-width: 62ch; }
+    .callout strong { color: var(--accent); font-weight: 600; }
+    .callout-note { border-left-color: var(--accent); }
+    .callout-tip  { border-left-color: var(--ok); }
+    .callout-tip strong { color: var(--ok); }
+    .callout-warn { border-left-color: var(--accent-soft); }
+    .callout-warn strong { color: var(--accent-soft); }
+
+    .pull-quote { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 26px; line-height: 1.35; color: var(--ink); margin: 36px 0; padding: 12px 0 12px 28px; border-left: 2px solid var(--accent); max-width: 56ch; }
+
+    .prev-next { display: flex; justify-content: space-between; gap: 24px; padding: 40px 0; border-top: 1px solid var(--rule); margin-top: 64px; }
+    .prev-next a { display: flex; flex-direction: column; gap: 4px; color: var(--ink); }
+    .pn-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+    .pn-title { font-family: var(--serif); font-size: 20px; color: var(--ink); }
+    .pn-next { text-align: right; }
+    .prev-next a:hover .pn-title { color: var(--accent); }
+
+    .ornament-divider { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 0; color: var(--accent); }
+    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
+    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
+
+    footer { padding: 56px 0 80px; border-top: 1px solid var(--rule); margin-top: 24px; }
+    .footer-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+    .footer-mark { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--ink-2); }
+    .footer-mark .accent { color: var(--accent); }
+    .footer-meta { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; }
+    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
+    .footer-meta a:hover { color: var(--accent); }
+
+    /* Placeholder styling */
+    .todo { color: var(--ink-3); font-style: italic; }
+
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .masthead-row { flex-direction: column; align-items: flex-start; }
+      .stat-block { grid-template-columns: 1fr 1fr; }
+      .stat { border-right: none; border-bottom: 1px dashed var(--rule); padding: 14px 0; }
+      .stat:last-child { border-bottom: none; }
+      .prev-next { flex-direction: column; gap: 32px; }
+      .pn-next { text-align: left; }
+    }
   </style>
 </head>
 <body>
-<div class="layout">
-  <nav>
-    <div class="nav-logo">System Design</div>
-    <div class="nav-section">Navigation</div>
-    <ul>
-      <li><a href="../index.html">🏠 Home</a></li>
-      <li><a href="../_topic-roadmap.html">🗺 Topics</a></li>
-    </ul>
-    <div class="nav-section">Designs</div>
-    <ul>
-      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
-    </ul>
-    <div class="nav-section">Patterns</div>
-    <ul>
-      <li><a href="../patterns/caching.html">Caching</a></li>
-      <li><a href="../patterns/token-generation.html">Token Generation</a></li>
-      <li><a href="../patterns/database-selection.html">Database Selection</a></li>
-    </ul>
-    <div class="nav-section">Templates</div>
-    <ul>
-      <li><a href="design-template.html" class="active">Design Template</a></li>
-    </ul>
-  </nav>
+<div class="container">
 
-  <main>
-    <h1>[TOPIC NAME]</h1>
-    <div class="page-meta">
-      <span class="tag">YYYY-MM-DD</span>
-      <span class="tag">Easy / Medium / Hard</span>
-      <span class="tag">tag1</span>
-      <span class="tag">tag2</span>
+  <header class="masthead">
+    <div class="masthead-row">
+      <div>
+        <a href="../index.html" style="text-decoration:none;">
+          <div class="wordmark">System Design <span class="amp">&amp;</span> Trade-offs</div>
+          <span class="wordmark-sub">a Filter Coffee Way notebook</span>
+        </a>
+      </div>
+      <nav>
+        <a href="../index.html#designs">Designs</a>
+        <a href="../index.html#patterns">Patterns</a>
+        <a href="../index.html#numbers">Numbers</a>
+        <a href="../_topic-roadmap.html">Roadmap</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    <div class="issue-strip">
+      <span>Vol. I &nbsp;·&nbsp; Issue NN</span>
+      <span><a href="../index.html" style="color:var(--ink-3);">← back to cover</a></span>
+      <span>MMXXVI</span>
+    </div>
+  </header>
+
+  <article>
+
+    <!-- Article header — fill in title, dek, tags -->
+    <header class="article-header">
+      <div class="kicker">Issue NN · Design</div>
+      <h1 class="article-title">[Topic] <em>[Noun]</em></h1>
+      <p class="article-dek">[One-sentence dek — the single most important constraint or trade-off this design revolves around.]</p>
+      <div class="byline">
+        <span>Published <strong style="color:var(--ink-2);font-weight:500;">YYYY-MM-DD</strong></span>
+        <span class="sep">·</span>
+        <span class="tag">Easy / Medium / Hard</span>
+        <span class="tag">tag1</span>
+        <span class="tag">tag2</span>
+      </div>
+    </header>
+
+    <!-- At-a-glance stat block — remove if no anchor numbers -->
+    <div class="stat-block">
+      <div class="stat">
+        <span class="stat-label">Read / write ratio</span>
+        <span class="stat-value todo">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Peak QPS</span>
+        <span class="stat-value todo">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Latency target</span>
+        <span class="stat-value todo">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Storage</span>
+        <span class="stat-value todo">—</span>
+      </div>
     </div>
 
-    <h2><span class="section-num">1.</span> Requirements</h2>
+    <!-- i. Requirements -->
+    <h2 class="section-h2"><span class="section-num">i.</span> Requirements</h2>
 
     <h3>Functional</h3>
     <ul>
-      <li>requirement 1</li>
-      <li>requirement 2</li>
-      <li>requirement 3</li>
+      <li class="todo">requirement 1</li>
+      <li class="todo">requirement 2</li>
+      <li class="todo">requirement 3</li>
     </ul>
 
     <h3>Non-Functional</h3>
     <ul>
-      <li><strong>Availability:</strong> …</li>
-      <li><strong>Latency:</strong> …</li>
-      <li><strong>Consistency:</strong> …</li>
-      <li><strong>Durability:</strong> …</li>
-      <li>Read/Write ratio: ~X:1</li>
+      <li><strong>Availability:</strong> <span class="todo">…</span></li>
+      <li><strong>Latency:</strong> <span class="todo">…</span></li>
+      <li><strong>Consistency:</strong> <span class="todo">…</span></li>
+      <li><strong>Durability:</strong> <span class="todo">…</span></li>
+      <li>Read/Write ratio: <span class="todo">~X:1</span></li>
     </ul>
 
     <h3>Out of Scope</h3>
     <ul>
-      <li>item 1</li>
-      <li>item 2</li>
+      <li class="todo">item 1</li>
+      <li class="todo">item 2</li>
     </ul>
 
-    <h2><span class="section-num">2.</span> Capacity Estimates</h2>
+    <!-- ii. Capacity Estimates -->
+    <h2 class="section-h2"><span class="section-num">ii.</span> Capacity Estimates</h2>
+
     <table>
       <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
       <tbody>
-        <tr><td>Daily active users</td><td>…</td></tr>
-        <tr><td>Requests per day</td><td>…</td></tr>
-        <tr><td>Write QPS</td><td>…</td></tr>
-        <tr><td>Read QPS</td><td>…</td></tr>
-        <tr><td>Data per record</td><td>…</td></tr>
-        <tr><td>Storage (5 years)</td><td>…</td></tr>
-        <tr><td>Bandwidth</td><td>…</td></tr>
+        <tr><td>Daily active users</td><td class="todo">…</td></tr>
+        <tr><td>Requests per day</td><td class="todo">…</td></tr>
+        <tr><td>Write QPS</td><td class="todo">…</td></tr>
+        <tr><td>Read QPS</td><td class="todo">…</td></tr>
+        <tr><td>Data per record</td><td class="todo">…</td></tr>
+        <tr><td>Storage (5 years)</td><td class="todo">…</td></tr>
+        <tr><td>Bandwidth</td><td class="todo">…</td></tr>
       </tbody>
     </table>
-    <div class="callout">Key constraint to design around: [read-heavy / write-heavy / storage / latency]</div>
 
-    <h2><span class="section-num">3.</span> High-Level Design</h2>
-    <pre>[Draw ASCII diagram here]
+    <aside class="callout callout-note">
+      <strong>Key constraint —</strong> <span class="todo">[read-heavy / write-heavy / storage / latency — the one thing to design around]</span>
+    </aside>
 
-Client → Load Balancer → Service → Cache → DB</pre>
+    <!-- iii. High-Level Design -->
+    <h2 class="section-h2"><span class="section-num">iii.</span> High-Level Design</h2>
+
+    <pre><code class="todo">[Draw ASCII diagram here]
+
+Client → Load Balancer → Service → Cache → DB</code></pre>
 
     <h3>Write path</h3>
-    <ul>
-      <li>step 1</li>
-      <li>step 2</li>
-      <li>step 3</li>
-    </ul>
+    <ol>
+      <li class="todo">step 1</li>
+      <li class="todo">step 2</li>
+      <li class="todo">step 3</li>
+    </ol>
 
     <h3>Read path</h3>
-    <ul>
-      <li>step 1</li>
-      <li>step 2</li>
-      <li>step 3</li>
-    </ul>
+    <ol>
+      <li class="todo">step 1</li>
+      <li class="todo">step 2</li>
+      <li class="todo">step 3</li>
+    </ol>
 
-    <h2><span class="section-num">4.</span> Key Design Decisions</h2>
+    <!-- iv. Key Design Decisions -->
+    <h2 class="section-h2"><span class="section-num">iv.</span> Key Design Decisions</h2>
 
-    <h3>4.1 [Decision Name]</h3>
-    <p>Options considered: Option A (pros / cons) vs Option B (pros / cons)</p>
-    <div class="callout">Decision: [chosen approach and why]</div>
+    <h3>[Decision 1]</h3>
+    <p class="todo">Options considered: Option A (pros / cons) vs Option B (pros / cons)</p>
+    <aside class="callout callout-note">
+      <strong>Decision —</strong> <span class="todo">[chosen approach and why]</span>
+    </aside>
 
-    <h3>4.2 [Decision Name]</h3>
-    <p>Options considered: Option A (pros / cons) vs Option B (pros / cons)</p>
-    <div class="callout">Decision: [chosen approach and why]</div>
+    <h3>[Decision 2]</h3>
+    <p class="todo">Options considered: Option A (pros / cons) vs Option B (pros / cons)</p>
+    <aside class="callout callout-note">
+      <strong>Decision —</strong> <span class="todo">[chosen approach and why]</span>
+    </aside>
 
-    <h3>4.3 Database Choice</h3>
+    <h3>Database Choice</h3>
     <p>See <a href="../patterns/database-selection.html">patterns/database-selection</a>.</p>
     <ul>
-      <li><strong>Schema:</strong> …</li>
-      <li><strong>Access pattern:</strong> …</li>
-      <li><strong>Decision:</strong> …</li>
-      <li><strong>Sharding key (if applicable):</strong> …</li>
+      <li><strong>Schema:</strong> <span class="todo">…</span></li>
+      <li><strong>Access pattern:</strong> <span class="todo">…</span></li>
+      <li><strong>Decision:</strong> <span class="todo">…</span></li>
+      <li><strong>Sharding key (if applicable):</strong> <span class="todo">…</span></li>
     </ul>
 
-    <h3>4.4 Caching</h3>
+    <h3>Caching</h3>
     <p>See <a href="../patterns/caching.html">patterns/caching</a>.</p>
     <ul>
-      <li><strong>Strategy:</strong> …</li>
-      <li><strong>TTL:</strong> …</li>
-      <li><strong>Eviction:</strong> …</li>
-      <li><strong>Stampede mitigation:</strong> …</li>
+      <li><strong>Strategy:</strong> <span class="todo">…</span></li>
+      <li><strong>TTL:</strong> <span class="todo">…</span></li>
+      <li><strong>Eviction:</strong> <span class="todo">…</span></li>
+      <li><strong>Stampede mitigation:</strong> <span class="todo">…</span></li>
     </ul>
 
-    <h2><span class="section-num">5.</span> Deep Dives</h2>
+    <!-- v. Deep Dives -->
+    <h2 class="section-h2"><span class="section-num">v.</span> Deep Dives</h2>
 
-    <h3>[Topic 1 — e.g., Handling hot spots]</h3>
-    <p>Fill in during session…</p>
+    <h3 class="todo">[Topic 1 — e.g., Handling hot spots]</h3>
+    <p class="todo">Fill in during session…</p>
 
-    <h3>[Topic 2 — e.g., Consistency trade-offs]</h3>
-    <p>Fill in during session…</p>
+    <h3 class="todo">[Topic 2 — e.g., Consistency trade-offs]</h3>
+    <p class="todo">Fill in during session…</p>
 
-    <h3>[Topic 3 — e.g., Failure scenarios]</h3>
-    <p>Fill in during session…</p>
+    <h3 class="todo">[Topic 3 — e.g., Failure scenarios]</h3>
+    <p class="todo">Fill in during session…</p>
 
-    <h2><span class="section-num">6.</span> Failure Modes & Mitigations</h2>
+    <!-- vi. Failure Modes -->
+    <h2 class="section-h2"><span class="section-num">vi.</span> Failure Modes &amp; Mitigations</h2>
+
     <table>
       <thead><tr><th>Failure</th><th>Impact</th><th>Mitigation</th></tr></thead>
       <tbody>
-        <tr><td>…</td><td>…</td><td>…</td></tr>
-        <tr><td>…</td><td>…</td><td>…</td></tr>
-        <tr><td>…</td><td>…</td><td>…</td></tr>
+        <tr><td class="todo">…</td><td class="todo">…</td><td class="todo">…</td></tr>
+        <tr><td class="todo">…</td><td class="todo">…</td><td class="todo">…</td></tr>
+        <tr><td class="todo">…</td><td class="todo">…</td><td class="todo">…</td></tr>
       </tbody>
     </table>
 
-    <h2><span class="section-num">7.</span> Key Takeaways</h2>
-    <ul>
-      <li>takeaway 1</li>
-      <li>takeaway 2</li>
-      <li>takeaway 3</li>
-    </ul>
+    <!-- vii. Key Takeaways -->
+    <h2 class="section-h2"><span class="section-num">vii.</span> Key Takeaways</h2>
 
-    <h2><span class="section-num">8.</span> Patterns to Update</h2>
+    <ol>
+      <li class="todo">takeaway 1</li>
+      <li class="todo">takeaway 2</li>
+      <li class="todo">takeaway 3</li>
+    </ol>
+
+    <!-- viii. Patterns to Update -->
+    <h2 class="section-h2"><span class="section-num">viii.</span> Patterns to Update</h2>
+
     <p>After this session, add/update:</p>
     <ul>
-      <li><a href="../patterns/caching.html">patterns/caching</a> — [what to add]</li>
-      <li><a href="../patterns/database-selection.html">patterns/database-selection</a> — [what to add]</li>
-      <li>patterns/[new-pattern] — [if a new cross-cutting pattern emerged]</li>
+      <li><a href="../patterns/caching.html">patterns/caching</a> — <span class="todo">[what to add]</span></li>
+      <li><a href="../patterns/database-selection.html">patterns/database-selection</a> — <span class="todo">[what to add]</span></li>
+      <li class="todo">patterns/[new-pattern] — [if a new cross-cutting pattern emerged]</li>
     </ul>
 
-    <h2><span class="section-num">9.</span> Go Deeper</h2>
+    <!-- ix. Go Deeper -->
+    <h2 class="section-h2"><span class="section-num">ix.</span> Go Deeper</h2>
+
     <ul>
-      <li>question 1?</li>
-      <li>question 2?</li>
-      <li>question 3?</li>
+      <li class="todo">question 1?</li>
+      <li class="todo">question 2?</li>
+      <li class="todo">question 3?</li>
     </ul>
-  </main>
+
+    <div class="ornament-divider" style="margin-top:64px;">
+      <span class="line"></span>
+      <span class="dot">❦</span>
+      <span class="line"></span>
+    </div>
+
+    <nav class="prev-next">
+      <a class="pn-prev" href="../index.html">
+        <span class="pn-label">Back to</span>
+        <span class="pn-title">Cover</span>
+      </a>
+      <a class="pn-next" href="#">
+        <span class="pn-label">Next issue →</span>
+        <span class="pn-title todo">[Next Topic]</span>
+      </a>
+    </nav>
+
+  </article>
+
+  <footer>
+    <div class="footer-row">
+      <div class="footer-mark">Hand-written, hand-pulled. <span class="accent">— filter coffee way</span></div>
+      <div class="footer-meta">
+        © 2026 · made for understanding
+        <a href="../_topic-roadmap.html">Roadmap</a>
+        <a href="design-template.html">Template</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
 </div>
 </body>
 </html>

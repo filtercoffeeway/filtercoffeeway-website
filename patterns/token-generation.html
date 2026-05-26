@@ -3,72 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Token / ID Generation — System Design Patterns</title>
+  <title>Token &amp; ID Generation — System Design Patterns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
+    :root {
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
+      --rule-2:      #d6c5a4;
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
+      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
-    a { color: #7dd3fc; text-decoration: none; }
-    a:hover { text-decoration: underline; color: #38bdf8; }
-    .layout { display: flex; min-height: 100vh; }
-    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
-    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
-    nav ul { list-style: none; padding: 4px 0; }
-    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
-    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
-    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; }
-    .status-done { color: #4ade80 !important; }
-    main { flex: 1; padding: 48px 56px; max-width: 900px; }
-    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
-    .appears-in { font-size: 13px; color: #475569; margin-bottom: 36px; }
-    .appears-in a { color: #7dd3fc; }
-    h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 40px 0 14px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
-    h3 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 22px 0 8px; }
-    p { font-size: 14px; color: #cbd5e1; margin-bottom: 10px; }
-    ul { list-style: none; padding: 0; margin-bottom: 12px; }
-    ul li { font-size: 14px; color: #cbd5e1; padding: 3px 0 3px 16px; position: relative; }
-    ul li::before { content: "–"; position: absolute; left: 0; color: #334155; }
-    pre { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 10px 0 16px; font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #94a3b8; }
-    code { font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #7dd3fc; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 20px; }
-    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
-    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    td:first-child { color: #f1f5f9; font-weight: 500; }
-    .callout { background: #0c1a2e; border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #93c5fd; }
-    .recommended { background: #052e16; border-left: 3px solid #4ade80; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0; font-size: 14px; color: #86efac; }
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body {
+      font-family: var(--sans); background: var(--paper); color: var(--ink);
+      line-height: 1.6; font-size: 16px;
+      background-image:
+        radial-gradient(rgba(168,90,42,0.035) 1px, transparent 1px),
+        radial-gradient(rgba(43,29,18,0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 37px 37px;
+      background-position: 0 0, 11px 13px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--ink); }
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+
+    .masthead { padding: 22px 0 16px; border-bottom: 1px solid var(--rule); }
+    .masthead-row { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .wordmark { font-family: var(--serif); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; color: var(--ink); }
+    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
+    .wordmark-sub { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-top: 4px; }
+    .masthead nav { display: flex; gap: 26px; flex-wrap: wrap; font-size: 13px; font-weight: 500; }
+    .masthead nav a { color: var(--ink-2); letter-spacing: 0.02em; border-bottom: 1px solid transparent; padding-bottom: 2px; transition: color .15s, border-color .15s; }
+    .masthead nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+    .issue-strip { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-3); }
+
+    article { max-width: 840px; margin: 0 auto; }
+    .article-header { padding: 56px 0 40px; border-bottom: 1px solid var(--rule); margin-bottom: 48px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; display: inline-flex; align-items: center; gap: 10px; }
+    .kicker::before { content: ""; width: 28px; height: 1px; background: var(--accent); }
+    .article-title { font-family: var(--serif); font-weight: 700; font-size: clamp(36px, 4.5vw, 56px); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink); margin: 8px 0 16px; }
+    .article-title em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .article-dek { font-family: var(--serif); font-weight: 300; font-style: italic; font-size: 21px; line-height: 1.4; color: var(--ink-2); max-width: 56ch; margin-bottom: 28px; }
+    .byline { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; align-items: center; }
+    .byline .sep { color: var(--rule-2); }
+    .byline .tag { font-size: 11px; padding: 2px 9px; border: 1px solid var(--rule-2); border-radius: 99px; color: var(--ink-2); background: var(--paper-2); }
+
+    .section-h2 { font-family: var(--serif); font-weight: 600; font-size: 28px; letter-spacing: -0.015em; color: var(--ink); margin: 56px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+    .section-h2 .section-num { font-family: var(--serif); font-style: italic; font-weight: 300; font-size: 18px; color: var(--accent); margin-right: 10px; }
+
+    article p { font-size: 16px; line-height: 1.75; color: var(--ink-2); margin: 0 0 18px; max-width: 62ch; }
+    article h3 { font-family: var(--serif); font-weight: 600; font-size: 20px; color: var(--ink); margin: 32px 0 12px; letter-spacing: -0.01em; }
+    article h4 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin: 24px 0 10px; }
+    article ul, article ol { margin: 0 0 18px 0; padding-left: 0; list-style: none; max-width: 62ch; }
+    article ul li, article ol li { position: relative; padding: 4px 0 4px 22px; font-size: 16px; line-height: 1.7; color: var(--ink-2); }
+    article ul li::before { content: "—"; position: absolute; left: 0; color: var(--accent-soft); font-weight: 500; }
+    article ol { counter-reset: olist; }
+    article ol li { counter-increment: olist; }
+    article ol li::before { content: counter(olist) "."; position: absolute; left: 0; color: var(--accent); font-family: var(--serif); font-weight: 500; font-size: 14px; }
+    article strong { color: var(--ink); font-weight: 600; }
+    article em { font-style: italic; color: var(--ink); }
+    code { font-family: var(--mono); font-size: 13.5px; color: var(--accent); background: var(--paper-3); padding: 1px 6px; border-radius: 3px; }
+
+    pre { background: var(--paper-3); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; overflow-x: auto; margin: 16px 0 24px; line-height: 1.55; }
+    pre code { color: var(--ink); background: transparent; padding: 0; font-size: 13.5px; }
+
+    article table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14.5px; }
+    article th { text-align: left; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); padding: 10px 14px; background: var(--paper-2); border-bottom: 1px solid var(--rule-2); }
+    article td { padding: 12px 14px; border-bottom: 1px solid var(--rule); color: var(--ink-2); vertical-align: top; }
+    article tr:last-child td { border-bottom: none; }
+    article td:first-child { color: var(--ink); font-weight: 500; }
+
+    .callout { border-left: 3px solid var(--accent); background: var(--paper-2); border-radius: 0 6px 6px 0; padding: 14px 20px; margin: 20px 0 24px; font-size: 14.5px; line-height: 1.65; color: var(--ink-2); max-width: 62ch; }
+    .callout strong { color: var(--accent); font-weight: 600; }
+    .callout-note { border-left-color: var(--accent); }
+    .callout-tip  { border-left-color: var(--ok); }
+    .callout-tip strong { color: var(--ok); }
+    .callout-warn { border-left-color: var(--accent-soft); }
+    .callout-warn strong { color: var(--accent-soft); }
+
+    .prev-next { display: flex; justify-content: space-between; gap: 24px; padding: 40px 0; border-top: 1px solid var(--rule); margin-top: 64px; }
+    .prev-next a { display: flex; flex-direction: column; gap: 4px; color: var(--ink); }
+    .pn-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+    .pn-title { font-family: var(--serif); font-size: 20px; color: var(--ink); }
+    .pn-next { text-align: right; }
+    .prev-next a:hover .pn-title { color: var(--accent); }
+
+    .ornament-divider { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 0; color: var(--accent); }
+    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
+    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
+
+    footer { padding: 56px 0 80px; border-top: 1px solid var(--rule); margin-top: 24px; }
+    .footer-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+    .footer-mark { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--ink-2); }
+    .footer-mark .accent { color: var(--accent); }
+    .footer-meta { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; }
+    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
+    .footer-meta a:hover { color: var(--accent); }
+
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .masthead-row { flex-direction: column; align-items: flex-start; }
+      .prev-next { flex-direction: column; gap: 32px; }
+      .pn-next { text-align: left; }
+    }
   </style>
 </head>
 <body>
-<div class="layout">
-  <nav>
-    <div class="nav-logo">System Design</div>
-    <div class="nav-section">Navigation</div>
-    <ul>
-      <li><a href="../index.html">🏠 Home</a></li>
-      <li><a href="../_topic-roadmap.html">🗺 Topics</a></li>
-    </ul>
-    <div class="nav-section">Designs</div>
-    <ul>
-      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
-    </ul>
-    <div class="nav-section">Patterns</div>
-    <ul>
-      <li><a href="caching.html">Caching</a></li>
-      <li><a href="token-generation.html" class="active">Token Generation</a></li>
-      <li><a href="database-selection.html">Database Selection</a></li>
-    </ul>
-    <div class="nav-section">Templates</div>
-    <ul>
-      <li><a href="../templates/design-template.html">Design Template</a></li>
-    </ul>
-  </nav>
+<div class="container">
 
-  <main>
-    <h1>Pattern: Token / ID Generation</h1>
-    <p class="appears-in">Appears in: <a href="../designs/url-shortener.html">URL Shortener</a>, Order IDs, Session tokens, Distributed primary keys, Idempotency keys</p>
+  <header class="masthead">
+    <div class="masthead-row">
+      <div>
+        <a href="../index.html" style="text-decoration:none;">
+          <div class="wordmark">System Design <span class="amp">&amp;</span> Trade-offs</div>
+          <span class="wordmark-sub">a Filter Coffee Way notebook</span>
+        </a>
+      </div>
+      <nav>
+        <a href="../index.html#designs">Designs</a>
+        <a href="../index.html#patterns">Patterns</a>
+        <a href="../index.html#numbers">Numbers</a>
+        <a href="../_topic-roadmap.html">Roadmap</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    <div class="issue-strip">
+      <span>Vol. I &nbsp;·&nbsp; Pattern §2</span>
+      <span><a href="../index.html" style="color:var(--ink-3);">← back to cover</a></span>
+      <span>MMXXVI</span>
+    </div>
+  </header>
 
-    <h2>The Problem</h2>
+  <article>
+
+    <header class="article-header">
+      <div class="kicker">Pattern · Reference</div>
+      <h1 class="article-title">Token &amp; ID <em>Generation</em></h1>
+      <p class="article-dek">Distributed systems need unique IDs without coordination overhead — your choice of approach shapes correctness, ordering, and collision risk.</p>
+      <div class="byline">
+        <span>Appears in</span>
+        <span class="sep">·</span>
+        <span class="tag"><a href="../designs/url-shortener.html" style="color:inherit;">URL Shortener</a></span>
+        <span class="tag">Order IDs</span>
+        <span class="tag">Session tokens</span>
+        <span class="tag">Idempotency keys</span>
+      </div>
+    </header>
+
+    <!-- i. The Problem -->
+    <h2 class="section-h2"><span class="section-num">i.</span> The Problem</h2>
+
     <p>Distributed systems need unique IDs generated across multiple nodes with no coordination overhead. Requirements typically include:</p>
     <ul>
       <li><strong>Uniqueness</strong> — no collisions, ever</li>
@@ -77,42 +174,52 @@
       <li><strong>Short / URL-safe</strong> — for human-facing tokens</li>
     </ul>
 
-    <h2>Approach 1: Database Auto-Increment</h2>
-    <pre>INSERT INTO urls (...) → returns BIGINT auto_increment id</pre>
+    <!-- ii. DB Auto-Increment -->
+    <h2 class="section-h2"><span class="section-num">ii.</span> Approach 1 — Database Auto-Increment</h2>
+
+    <pre><code>INSERT INTO urls (...) → returns BIGINT auto_increment id</code></pre>
     <ul>
       <li><strong>Pros:</strong> Simple, unique, sortable</li>
       <li><strong>Cons:</strong> Single point of failure; write bottleneck; exposes record count</li>
       <li><strong>Use when:</strong> Single-node, low write volume</li>
     </ul>
 
-    <h2>Approach 2: UUID v4 (Random)</h2>
-    <pre>550e8400-e29b-41d4-a716-446655440000</pre>
+    <!-- iii. UUID v4 -->
+    <h2 class="section-h2"><span class="section-num">iii.</span> Approach 2 — UUID v4 (Random)</h2>
+
+    <pre><code>550e8400-e29b-41d4-a716-446655440000</code></pre>
     <ul>
       <li><strong>Pros:</strong> Trivially unique; no coordination; well-supported</li>
       <li><strong>Cons:</strong> 128 bits = long; not sortable; random = poor index locality (B-tree fragmentation)</li>
       <li><strong>Use when:</strong> Session tokens, API keys where length doesn't matter</li>
     </ul>
 
-    <h2>Approach 3: UUID v7 (Time-ordered)</h2>
-    <pre>018e-xxxx-xxxx-xxxx-xxxxxxxxxxxx  (48-bit timestamp prefix)</pre>
+    <!-- iv. UUID v7 -->
+    <h2 class="section-h2"><span class="section-num">iv.</span> Approach 3 — UUID v7 (Time-ordered)</h2>
+
+    <pre><code>018e-xxxx-xxxx-xxxx-xxxxxxxxxxxx  (48-bit timestamp prefix)</code></pre>
     <ul>
       <li><strong>Pros:</strong> Unique + time-sortable; good for DB indexes; no coordination</li>
       <li><strong>Cons:</strong> Still 128 bits; UUID v7 is a newer spec (check library support)</li>
       <li><strong>Use when:</strong> DB primary keys where you want insert locality without custom infra</li>
     </ul>
 
-    <h2>Approach 4: Snowflake ID (Twitter)</h2>
-    <pre>[41-bit timestamp ms] [10-bit machine ID] [12-bit sequence]
-= 64-bit integer</pre>
+    <!-- v. Snowflake -->
+    <h2 class="section-h2"><span class="section-num">v.</span> Approach 4 — Snowflake ID (Twitter)</h2>
+
+    <pre><code>[41-bit timestamp ms] [10-bit machine ID] [12-bit sequence]
+= 64-bit integer</code></pre>
     <ul>
       <li><strong>Pros:</strong> Globally unique; sortable by time; compact (64-bit); ~4096 IDs/ms/node</li>
       <li><strong>Cons:</strong> Requires machine ID assignment; clock skew can cause issues</li>
       <li><strong>Use when:</strong> High-throughput distributed systems (tweets, orders, events)</li>
     </ul>
-    <p><strong>Variants:</strong> Sonyflake (Sony): 39-bit timestamp (10ms resolution) + 16-bit sequence + 8-bit machine. Instagram's approach: Postgres sequence per shard + timestamp + shard ID.</p>
+    <p><strong>Variants:</strong> Sonyflake: 39-bit timestamp (10ms resolution) + 16-bit sequence + 8-bit machine. Instagram: Postgres sequence per shard + timestamp + shard ID.</p>
 
-    <h2>Approach 5: MD5 / SHA Hash of Content</h2>
-    <pre>short_code = base62(SHA256(long_url))[:7]</pre>
+    <!-- vi. Hash -->
+    <h2 class="section-h2"><span class="section-num">vi.</span> Approach 5 — MD5 / SHA Hash of Content</h2>
+
+    <pre><code>short_code = base62(SHA256(long_url))[:7]</code></pre>
     <ul>
       <li><strong>Pros:</strong> Deterministic — same URL always gets same code (natural dedup)</li>
       <li><strong>Cons:</strong> Collision risk for first N chars; can't guarantee uniqueness without check; not sequential</li>
@@ -120,16 +227,23 @@
     </ul>
     <p><strong>Collision handling:</strong> On write: <code>INSERT ... ON CONFLICT</code> or check-then-insert. On collision: append salt, re-hash, retry.</p>
 
-    <h2>Approach 6: Counter + Base62 Encoding ✅</h2>
-    <div class="recommended">Recommended for URL Shortener and similar human-facing token scenarios.</div>
-    <pre>counter = 1000000
-base62(1000000) = "4c92"  →  7-char short code</pre>
+    <!-- vii. Counter + Base62 -->
+    <h2 class="section-h2"><span class="section-num">vii.</span> Approach 6 — Counter + Base62 Encoding</h2>
+
+    <aside class="callout callout-tip">
+      <strong>Recommended —</strong> for URL Shortener and similar human-facing token scenarios.
+    </aside>
+
+    <pre><code>counter = 1000000
+base62(1000000) = "4c92"  →  7-char short code</code></pre>
+
     <p><strong>Base62 alphabet:</strong> <code>a-z A-Z 0-9</code> (62 chars)</p>
+
     <table>
       <thead><tr><th>Chars</th><th>Max values</th><th>Coverage at 100M/day</th></tr></thead>
       <tbody>
         <tr><td>6</td><td>56 billion</td><td>~1.5 years</td></tr>
-        <tr><td>7</td><td>3.5 trillion</td><td>~95 years ✓</td></tr>
+        <tr><td>7</td><td>3.5 trillion</td><td>~95 years</td></tr>
         <tr><td>8</td><td>218 trillion</td><td>~5,800 years</td></tr>
       </tbody>
     </table>
@@ -143,20 +257,27 @@ base62(1000000) = "4c92"  →  7-char short code</pre>
         <tr><td>Zookeeper ranges</td><td>Each server claims range (e.g., 1M–2M)</td><td>No coordination per ID; Zookeeper only needed for range claims</td></tr>
       </tbody>
     </table>
-    <div class="callout"><strong>Best choice:</strong> Zookeeper (or etcd) range pre-fetch. Servers generate IDs locally within their claimed range. Claim a new range only when exhausted.</div>
 
-    <h2>Approach 7: Pre-generated Token Pool</h2>
-    <pre>Background job generates N random tokens
+    <aside class="callout callout-note">
+      <strong>Best choice —</strong> Zookeeper (or etcd) range pre-fetch. Servers generate IDs locally within their claimed range. Claim a new range only when exhausted.
+    </aside>
+
+    <!-- viii. Pre-generated Pool -->
+    <h2 class="section-h2"><span class="section-num">viii.</span> Approach 7 — Pre-generated Token Pool</h2>
+
+    <pre><code>Background job generates N random tokens
 Stores in "available" table
-Write service pops one atomically</pre>
+Write service pops one atomically</code></pre>
     <ul>
       <li><strong>Pros:</strong> Write service has zero generation logic; easy to scale</li>
       <li><strong>Cons:</strong> Complex background job; token pool size to manage; "used" vs "available" state</li>
       <li><strong>Use when:</strong> Tokens need to be guaranteed-random (not sequential) and pre-validation is useful</li>
     </ul>
 
-    <h2>Base62 Implementation Reference</h2>
-    <pre>ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    <!-- ix. Base62 Implementation -->
+    <h2 class="section-h2"><span class="section-num">ix.</span> Base62 Implementation Reference</h2>
+
+    <pre><code>ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 BASE = 62
 
 def encode(num: int) -> str:
@@ -172,9 +293,11 @@ def decode(s: str) -> int:
     result = 0
     for char in s:
         result = result * BASE + ALPHABET.index(char)
-    return result</pre>
+    return result</code></pre>
 
-    <h2>Decision Framework</h2>
+    <!-- x. Decision Framework -->
+    <h2 class="section-h2"><span class="section-num">x.</span> Decision Framework</h2>
+
     <table>
       <thead><tr><th>Requirement</th><th>Best approach</th></tr></thead>
       <tbody>
@@ -187,7 +310,9 @@ def decode(s: str) -> int:
       </tbody>
     </table>
 
-    <h2>Key Points</h2>
+    <!-- xi. Key Points -->
+    <h2 class="section-h2"><span class="section-num">xi.</span> Key Points</h2>
+
     <ul>
       <li>For URL Shortener: always go Counter + Base62 — explain why hashing risks collisions</li>
       <li>Mention Zookeeper/etcd for range coordination — shows distributed systems fluency</li>
@@ -195,7 +320,38 @@ def decode(s: str) -> int:
       <li>Snowflake is worth knowing for any "generate unique IDs at scale" question</li>
       <li>Always discuss: will sequential IDs expose business metrics? — sometimes a security consideration to use random instead</li>
     </ul>
-  </main>
+
+    <div class="ornament-divider" style="margin-top:64px;">
+      <span class="line"></span>
+      <span class="dot">❦</span>
+      <span class="line"></span>
+    </div>
+
+    <nav class="prev-next">
+      <a class="pn-prev" href="caching.html">
+        <span class="pn-label">← Previous pattern</span>
+        <span class="pn-title">Caching Strategies</span>
+      </a>
+      <a class="pn-next" href="database-selection.html">
+        <span class="pn-label">Next pattern →</span>
+        <span class="pn-title">Database Selection</span>
+      </a>
+    </nav>
+
+  </article>
+
+  <footer>
+    <div class="footer-row">
+      <div class="footer-mark">Hand-written, hand-pulled. <span class="accent">— filter coffee way</span></div>
+      <div class="footer-meta">
+        © 2026 · made for understanding
+        <a href="../_topic-roadmap.html">Roadmap</a>
+        <a href="../templates/design-template.html">Template</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
 </div>
 </body>
 </html>

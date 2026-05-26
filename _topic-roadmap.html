@@ -3,152 +3,384 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Topics — System Design</title>
+  <title>Roadmap — System Design &amp; Trade-offs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
+    :root {
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
+      --rule-2:      #d6c5a4;
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
+      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.7; }
-    a { color: #7dd3fc; text-decoration: none; }
-    a:hover { text-decoration: underline; color: #38bdf8; }
-    .layout { display: flex; min-height: 100vh; }
-    nav { width: 240px; min-width: 240px; background: #161b27; border-right: 1px solid #1e293b; padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .nav-logo { padding: 0 20px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #1e293b; }
-    .nav-section { padding: 20px 20px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
-    nav ul { list-style: none; padding: 4px 0; }
-    nav ul li a { display: block; padding: 6px 20px; font-size: 14px; color: #94a3b8; border-left: 3px solid transparent; transition: all 0.15s; }
-    nav ul li a:hover { color: #e2e8f0; background: #1e293b; border-left-color: #7dd3fc; text-decoration: none; }
-    nav ul li a.active { color: #7dd3fc; border-left-color: #7dd3fc; background: #1e293b22; }
-    .status-done { color: #4ade80 !important; }
-    main { flex: 1; padding: 48px 56px; max-width: 900px; }
-    h1 { font-size: 28px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
-    .page-meta { color: #475569; font-size: 14px; margin-bottom: 40px; }
-    h2 { font-size: 16px; font-weight: 700; color: #f1f5f9; margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; }
-    h3 { font-size: 14px; font-weight: 600; color: #94a3b8; margin: 24px 0 10px; letter-spacing: 0.05em; text-transform: uppercase; font-size: 12px; }
-    ul { list-style: none; padding: 0; }
-    ul li { padding: 5px 0; font-size: 14px; color: #cbd5e1; display: flex; align-items: center; gap: 10px; }
-    .check { color: #4ade80; font-weight: 600; }
-    .todo { color: #334155; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
-    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
-    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--sans); background: var(--paper); color: var(--ink);
+      line-height: 1.6; font-size: 16px;
+      background-image:
+        radial-gradient(rgba(168,90,42,0.035) 1px, transparent 1px),
+        radial-gradient(rgba(43,29,18,0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 37px 37px;
+      background-position: 0 0, 11px 13px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--ink); }
+
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+
+    /* Masthead */
+    .masthead { padding: 22px 0 16px; border-bottom: 1px solid var(--rule); }
+    .masthead-row { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .wordmark { font-family: var(--serif); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; color: var(--ink); }
+    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
+    .wordmark-sub { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-top: 4px; }
+    .masthead nav { display: flex; gap: 26px; flex-wrap: wrap; font-size: 13px; font-weight: 500; }
+    .masthead nav a { color: var(--ink-2); letter-spacing: 0.02em; border-bottom: 1px solid transparent; padding-bottom: 2px; transition: color .15s, border-color .15s; }
+    .masthead nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+    .issue-strip { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-3); }
+
+    /* Page header */
+    .page-header { padding: 56px 0 40px; border-bottom: 1px solid var(--rule); margin-bottom: 48px; max-width: 840px; }
+    .kicker { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; display: inline-flex; align-items: center; gap: 10px; }
+    .kicker::before { content: ""; width: 28px; height: 1px; background: var(--accent); }
+    .page-title { font-family: var(--serif); font-weight: 700; font-size: clamp(36px, 4.5vw, 56px); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink); margin: 8px 0 16px; }
+    .page-title em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .page-dek { font-family: var(--serif); font-weight: 300; font-style: italic; font-size: 20px; line-height: 1.4; color: var(--ink-2); max-width: 56ch; }
+
+    /* Section heading */
+    .section-h2 { font-family: var(--serif); font-weight: 600; font-size: 26px; letter-spacing: -0.015em; color: var(--ink); margin: 56px 0 8px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); max-width: 840px; }
+    .section-h2 .section-num { font-family: var(--serif); font-style: italic; font-weight: 300; font-size: 17px; color: var(--accent); margin-right: 10px; }
+    .section-sub { font-size: 14px; color: var(--ink-3); margin-bottom: 24px; max-width: 840px; }
+
+    /* Roadmap rows */
+    .roadmap-list { max-width: 840px; margin-top: 24px; }
+    .roadmap-row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 32px; align-items: center;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .roadmap-row:last-child { border-bottom: none; }
+    .roadmap-row .kicker { margin-bottom: 4px; }
+    .roadmap-row h3 { font-family: var(--serif); font-weight: 600; font-size: 22px; color: var(--ink); margin: 4px 0 6px; }
+    .roadmap-row h3 a { color: inherit; }
+    .roadmap-row h3 a:hover { color: var(--accent); }
+    .roadmap-row p { font-size: 14.5px; color: var(--ink-2); max-width: 60ch; line-height: 1.55; }
+
+    /* Concept subsections */
+    .concept-group { max-width: 840px; margin-top: 32px; }
+    .concept-group h3 {
+      font-family: var(--sans); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
+      margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+    }
+    .concept-list { list-style: none; padding: 0; margin-bottom: 28px; }
+    .concept-list li {
+      position: relative; padding: 6px 0 6px 22px;
+      font-size: 15px; line-height: 1.6; color: var(--ink-2);
+      border-bottom: 1px dotted var(--rule);
+    }
+    .concept-list li:last-child { border-bottom: none; }
+    .concept-list li::before { content: "—"; position: absolute; left: 0; color: var(--accent-soft); }
+    .concept-list li.done::before { content: "✓"; color: var(--ok); font-size: 13px; }
+
+    /* Pills */
+    .pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
+    .badge-published { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, var(--paper-2)); }
+    .badge-drafting  { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--paper-2)); }
+    .badge-planned   { color: var(--ink-3); background: var(--paper-3); }
+
+    /* Numbers table */
+    .numbers-table { max-width: 840px; margin-top: 24px; }
+    table { width: 100%; border-collapse: collapse; margin: 0 0 24px; font-size: 14.5px; }
+    th { text-align: left; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); padding: 10px 14px; background: var(--paper-2); border-bottom: 1px solid var(--rule-2); }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--rule); color: var(--ink-2); vertical-align: top; }
     tr:last-child td { border-bottom: none; }
-    td:first-child { color: #94a3b8; white-space: nowrap; }
-    td:nth-child(2) { color: #7dd3fc; font-family: "SF Mono", "Fira Code", monospace; }
-    .topic-link { color: #7dd3fc; }
-    p { font-size: 14px; color: #94a3b8; margin-bottom: 10px; }
+    td:first-child { color: var(--ink); font-weight: 500; }
+    td:nth-child(2) { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+
+    /* Ornament */
+    .ornament-divider { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 0; color: var(--accent); margin-top: 64px; }
+    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
+    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
+
+    /* Footer */
+    footer { padding: 56px 0 80px; border-top: 1px solid var(--rule); margin-top: 24px; }
+    .footer-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+    .footer-mark { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--ink-2); }
+    .footer-mark .accent { color: var(--accent); }
+    .footer-meta { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; }
+    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
+    .footer-meta a:hover { color: var(--accent); }
+
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .masthead-row { flex-direction: column; align-items: flex-start; }
+      .roadmap-row { grid-template-columns: 1fr; gap: 12px; }
+    }
   </style>
 </head>
 <body>
-<div class="layout">
-  <nav>
-    <div class="nav-logo">System Design</div>
-    <div class="nav-section">Navigation</div>
-    <ul>
-      <li><a href="../index.html">🏠 Home</a></li>
-      <li><a href="../_topic-roadmap.html" class="active">🗺 Topics</a></li>
-    </ul>
-    <div class="nav-section">Designs</div>
-    <ul>
-      <li><a href="../designs/url-shortener.html" class="status-done">✓ URL Shortener</a></li>
-    </ul>
-    <div class="nav-section">Patterns</div>
-    <ul>
-      <li><a href="../patterns/caching.html">Caching</a></li>
-      <li><a href="../patterns/token-generation.html">Token Generation</a></li>
-      <li><a href="../patterns/database-selection.html">Database Selection</a></li>
-    </ul>
-    <div class="nav-section">Templates</div>
-    <ul>
-      <li><a href="../templates/design-template.html">Design Template</a></li>
-    </ul>
-  </nav>
+<div class="container">
 
-  <main>
-    <h1>Topics</h1>
-    <p class="page-meta">All system design topics — deep dives, trade-offs, and the reasoning behind every decision.</p>
+  <header class="masthead">
+    <div class="masthead-row">
+      <div>
+        <a href="index.html" style="text-decoration:none;">
+          <div class="wordmark">System Design <span class="amp">&amp;</span> Trade-offs</div>
+          <span class="wordmark-sub">a Filter Coffee Way notebook</span>
+        </a>
+      </div>
+      <nav>
+        <a href="index.html#designs">Designs</a>
+        <a href="index.html#patterns">Patterns</a>
+        <a href="index.html#numbers">Numbers</a>
+        <a href="_topic-roadmap.html">Roadmap</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    <div class="issue-strip">
+      <span>Vol. I &nbsp;·&nbsp; All Issues</span>
+      <span><a href="index.html" style="color:var(--ink-3);">← back to cover</a></span>
+      <span>MMXXVI</span>
+    </div>
+  </header>
 
-    <h2>Designs</h2>
+  <div class="page-header">
+    <div class="kicker">Full Roadmap</div>
+    <h1 class="page-title">The whole <em>roadmap</em></h1>
+    <p class="page-dek">Every topic on the docket — what's published, what's drafting, and what's still just an interesting question.</p>
+  </div>
 
-    <h3>✅ Published</h3>
-    <ul>
-      <li><span class="check">✓</span> <a href="../designs/url-shortener.html">URL Shortener</a> — read-heavy, caching, base62, Zookeeper counter</li>
-    </ul>
+  <!-- ============ i. Designs ============ -->
+  <h2 class="section-h2"><span class="section-num">i.</span> Designs</h2>
+  <p class="section-sub">Each design walks requirements → estimates → high-level design → deep dives. One HTML file per issue.</p>
 
-    <h3>🔲 Coming Soon</h3>
-    <ul>
-      <li><span class="todo">○</span> Paste Bin / text sharing</li>
-      <li><span class="todo">○</span> Instagram / photo sharing feed</li>
-      <li><span class="todo">○</span> Twitter / social media timeline</li>
-      <li><span class="todo">○</span> YouTube / video streaming</li>
-      <li><span class="todo">○</span> WhatsApp / chat system</li>
-      <li><span class="todo">○</span> Uber / ride-sharing with geolocation</li>
-      <li><span class="todo">○</span> Rate limiter</li>
-      <li><span class="todo">○</span> Web crawler</li>
-      <li><span class="todo">○</span> Notification system</li>
-      <li><span class="todo">○</span> Search autocomplete / typeahead</li>
-      <li><span class="todo">○</span> Distributed key-value store</li>
-      <li><span class="todo">○</span> Distributed cache (Redis-style)</li>
-      <li><span class="todo">○</span> Consistent hashing deep dive</li>
-      <li><span class="todo">○</span> Distributed message queue (Kafka-style)</li>
-      <li><span class="todo">○</span> Payment system</li>
-    </ul>
+  <div class="roadmap-list">
 
-    <h2>Concepts Reference</h2>
-    <p>Core concepts that appear across multiple designs — worth understanding deeply.</p>
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 01</div>
+        <h3><a href="designs/url-shortener.html">URL Shortener</a></h3>
+        <p>Read-heavy redirect at planet scale. Counter ranges, base62 encoding, layered caching, and a Cassandra-vs-Postgres call that depends entirely on traffic shape.</p>
+      </div>
+      <span class="pill badge-published">✓ Published</span>
+    </div>
 
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 02</div>
+        <h3>Paste Bin</h3>
+        <p>Like URL shortener, but with content. Storage, expiration, and the moment object storage becomes the right answer.</p>
+      </div>
+      <span class="pill badge-drafting">Drafting</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 03</div>
+        <h3>Instagram</h3>
+        <p>Photo feed, fan-out on read vs write, and why your celebrity users break everything.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 04</div>
+        <h3>Twitter / Social Media Timeline</h3>
+        <p>Hybrid fan-out, timeline cache, the eventual consistency you live with so the home feed loads in time.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 05</div>
+        <h3>YouTube</h3>
+        <p>Video chunks, ABR ladders, CDN economics, and where transcoding actually happens.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 06</div>
+        <h3>WhatsApp</h3>
+        <p>Persistent connections, presence, end-to-end encryption, and what "delivered" actually guarantees.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 07</div>
+        <h3>Uber</h3>
+        <p>Geohashing, driver matching, and the cell-grid that makes "nearby" tractable.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 08</div>
+        <h3>Rate Limiter</h3>
+        <p>Token bucket, sliding window, and where the limiter itself becomes the bottleneck.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 09</div>
+        <h3>Web Crawler</h3>
+        <p>Distributed crawling, politeness, dedup at scale, and the frontier queue that never empties.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 10</div>
+        <h3>Notification System</h3>
+        <p>Push, SMS, email fan-out, and why at-least-once delivery is almost always what you want.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 11</div>
+        <h3>Search Autocomplete</h3>
+        <p>Trie vs inverted index, prefix matching, personalisation, and the latency budget that forces every choice.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 12</div>
+        <h3>Distributed Key-Value Store</h3>
+        <p>Consistent hashing, virtual nodes, quorum reads/writes, anti-entropy, and the CAP corner you pick.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 13</div>
+        <h3>Distributed Cache</h3>
+        <p>Redis-style architecture, cluster mode, eviction under memory pressure, and the client-side sharding story.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 14</div>
+        <h3>Consistent Hashing Deep Dive</h3>
+        <p>The ring, virtual nodes, hotspot mitigation, and every place it silently powers the systems above.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 15</div>
+        <h3>Distributed Message Queue</h3>
+        <p>Kafka-style logs, partitions, consumer groups, offset management, and the exactly-once myth.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+    <div class="roadmap-row">
+      <div>
+        <div class="kicker">Issue 16</div>
+        <h3>Payment System</h3>
+        <p>Idempotency keys, two-phase commits, the ledger that has to balance no matter what.</p>
+      </div>
+      <span class="pill badge-planned">Planned</span>
+    </div>
+
+  </div>
+
+  <!-- ============ ii. Concepts Reference ============ -->
+  <h2 class="section-h2"><span class="section-num">ii.</span> Concepts Reference</h2>
+  <p class="section-sub">Core ideas that appear across multiple designs — worth understanding deeply before or alongside the issues.</p>
+
+  <div class="concept-group">
     <h3>Fundamentals</h3>
-    <ul>
-      <li><span class="todo">○</span> CAP theorem — what each letter means and real-world examples of each trade-off</li>
-      <li><span class="todo">○</span> BASE vs ACID — when to choose which</li>
-      <li><span class="todo">○</span> Horizontal vs vertical scaling</li>
-      <li><span class="todo">○</span> Stateless vs stateful services</li>
-      <li><span class="todo">○</span> Synchronous vs asynchronous communication</li>
+    <ul class="concept-list">
+      <li>CAP theorem — what each letter means and real-world examples of each trade-off</li>
+      <li>BASE vs ACID — when to choose which</li>
+      <li>Horizontal vs vertical scaling</li>
+      <li>Stateless vs stateful services</li>
+      <li>Synchronous vs asynchronous communication</li>
     </ul>
 
     <h3>Data Storage</h3>
-    <ul>
-      <li><span class="todo">○</span> SQL vs NoSQL — decision framework, not just "SQL = relational"</li>
-      <li><span class="todo">○</span> Sharding strategies — range, hash, directory-based</li>
-      <li><span class="todo">○</span> Replication — leader-follower, multi-leader, leaderless</li>
-      <li><span class="todo">○</span> Indexes — B-tree, LSM-tree, when each is better</li>
-      <li><span class="todo">○</span> Consistent hashing — how it works, virtual nodes, use cases</li>
+    <ul class="concept-list">
+      <li>SQL vs NoSQL — decision framework, not just "SQL = relational"</li>
+      <li>Sharding strategies — range, hash, directory-based</li>
+      <li>Replication — leader-follower, multi-leader, leaderless</li>
+      <li>Indexes — B-tree, LSM-tree, when each is better</li>
+      <li>Consistent hashing — how it works, virtual nodes, use cases</li>
     </ul>
 
     <h3>Caching</h3>
-    <ul>
-      <li><span class="todo">○</span> Cache-aside, write-through, write-behind, read-through</li>
-      <li><span class="todo">○</span> Cache stampede / thundering herd and solutions</li>
-      <li><span class="todo">○</span> Eviction policies — LRU, LFU, TTL</li>
-      <li><span class="todo">○</span> Redis vs Memcached — when to pick which</li>
-      <li><span class="todo">○</span> CDN — push vs pull, cache invalidation</li>
+    <ul class="concept-list">
+      <li>Cache-aside, write-through, write-behind, read-through</li>
+      <li>Cache stampede / thundering herd and solutions</li>
+      <li>Eviction policies — LRU, LFU, TTL</li>
+      <li>Redis vs Memcached — when to pick which</li>
+      <li>CDN — push vs pull, cache invalidation</li>
     </ul>
 
-    <h3>Networking & APIs</h3>
-    <ul>
-      <li><span class="todo">○</span> REST vs GraphQL vs gRPC — trade-offs</li>
-      <li><span class="todo">○</span> Long polling vs WebSockets vs Server-Sent Events</li>
-      <li><span class="todo">○</span> Load balancing — round-robin, least connections, consistent hashing</li>
-      <li><span class="todo">○</span> Rate limiting — token bucket, leaky bucket, sliding window</li>
+    <h3>Networking &amp; APIs</h3>
+    <ul class="concept-list">
+      <li>REST vs GraphQL vs gRPC — trade-offs</li>
+      <li>Long polling vs WebSockets vs Server-Sent Events</li>
+      <li>Load balancing — round-robin, least connections, consistent hashing</li>
+      <li>Rate limiting — token bucket, leaky bucket, sliding window</li>
     </ul>
 
     <h3>Distributed Systems</h3>
-    <ul>
-      <li><span class="todo">○</span> Leader election</li>
-      <li><span class="todo">○</span> Distributed transactions — 2PC, saga pattern</li>
-      <li><span class="todo">○</span> Message queues — Kafka, RabbitMQ, trade-offs</li>
-      <li><span class="todo">○</span> Idempotency — why it matters, how to implement</li>
-      <li><span class="todo">○</span> Exactly-once vs at-least-once delivery</li>
-      <li><span class="todo">○</span> Bloom filters — use cases, false positive rate</li>
-      <li><span class="todo">○</span> Distributed locks</li>
+    <ul class="concept-list">
+      <li>Leader election</li>
+      <li>Distributed transactions — 2PC, saga pattern</li>
+      <li>Message queues — Kafka, RabbitMQ, trade-offs</li>
+      <li>Idempotency — why it matters, how to implement</li>
+      <li>Exactly-once vs at-least-once delivery</li>
+      <li>Bloom filters — use cases, false positive rate</li>
+      <li>Distributed locks</li>
     </ul>
 
     <h3>Estimation</h3>
-    <ul>
-      <li><span class="todo">○</span> Back-of-envelope math — QPS, storage, bandwidth</li>
-      <li><span class="todo">○</span> Read/write ratio reasoning</li>
-      <li><span class="todo">○</span> When to reach for what tier (cache vs DB vs CDN)</li>
+    <ul class="concept-list">
+      <li>Back-of-envelope math — QPS, storage, bandwidth</li>
+      <li>Read/write ratio reasoning</li>
+      <li>When to reach for what tier (cache vs DB vs CDN)</li>
     </ul>
+  </div>
 
-    <h2>Numbers to Know Cold</h2>
+  <!-- ============ iii. Numbers to Know Cold ============ -->
+  <h2 class="section-h2"><span class="section-num">iii.</span> Numbers to Know Cold</h2>
+  <p class="section-sub">The latencies, sizes, and throughputs you should be able to estimate without a calculator.</p>
+
+  <div class="numbers-table">
     <table>
       <thead><tr><th>Metric</th><th>Value</th><th>Notes</th></tr></thead>
       <tbody>
@@ -161,7 +393,7 @@
         <tr><td>Network (cross-region)</td><td>~150 ms</td><td></td></tr>
         <tr><td>1 Gbps NIC</td><td>~125 MB/s</td><td></td></tr>
         <tr><td>MySQL/Postgres write</td><td>~1–5 ms</td><td>single row, no contention</td></tr>
-        <tr><td>Redis get</td><td>~0.1 ms</td><td>in-memory</td></tr>
+        <tr><td>Redis GET</td><td>~0.1 ms</td><td>in-memory</td></tr>
         <tr><td>Typical DB row</td><td>~1 KB</td><td></td></tr>
         <tr><td>Typical image (compressed)</td><td>~300 KB</td><td></td></tr>
         <tr><td>Typical video (1 min, 720p)</td><td>~50 MB</td><td></td></tr>
@@ -169,8 +401,13 @@
         <tr><td>1 billion seconds</td><td>~31.7 years</td><td>handy for ID space sizing</td></tr>
       </tbody>
     </table>
+  </div>
 
-    <h2>Pattern Cross-Reference</h2>
+  <!-- ============ iv. Pattern Cross-Reference ============ -->
+  <h2 class="section-h2"><span class="section-num">iv.</span> Pattern Cross-Reference</h2>
+  <p class="section-sub">Which reusable patterns appear where — useful when you want to study a pattern across multiple designs.</p>
+
+  <div class="numbers-table">
     <table>
       <thead><tr><th>Pattern</th><th>Appears in</th></tr></thead>
       <tbody>
@@ -182,7 +419,26 @@
         <tr><td>Consistent hashing</td><td>Cache clusters, Sharding, Load balancing</td></tr>
       </tbody>
     </table>
-  </main>
+  </div>
+
+  <div class="ornament-divider">
+    <span class="line"></span>
+    <span class="dot">❦</span>
+    <span class="line"></span>
+  </div>
+
+  <footer>
+    <div class="footer-row">
+      <div class="footer-mark">Hand-written, hand-pulled. <span class="accent">— filter coffee way</span></div>
+      <div class="footer-meta">
+        © 2026 · made for understanding
+        <a href="index.html">Cover</a>
+        <a href="templates/design-template.html">Template</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
 </div>
 </body>
 </html>
