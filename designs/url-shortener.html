@@ -465,6 +465,7 @@
         <a href="../about.html">About Filter Coffee</a>
         <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
         <a href="../index.html#designs">System Design</a>
+        <a href="pastebin.html">Paste Bin</a>
         <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
@@ -554,16 +555,36 @@
       </thead>
       <tbody>
         <tr><td>New URLs per day</td><td>100 million</td></tr>
-        <tr><td>New URLs per second (write QPS)</td><td>~1,200</td></tr>
-        <tr><td>Redirect QPS (100× reads)</td><td>~120,000</td></tr>
+        <tr><td>New URLs per second (write QPS, avg)</td><td>~1,200</td></tr>
+        <tr><td>New URLs per second (write QPS, peak ≈ 3×)</td><td>~3,500</td></tr>
+        <tr><td>Redirect QPS (100× reads, avg)</td><td>~120,000</td></tr>
+        <tr><td>Redirect QPS (peak)</td><td>~360,000</td></tr>
         <tr><td>URL record size</td><td>~500 bytes (long URL + metadata)</td></tr>
         <tr><td>Storage for 10 years</td><td>100M × 365 × 10 × 500B ≈ 180 TB</td></tr>
         <tr><td>Cache (top 20% → 80% traffic)</td><td>hot set fits in Redis (~1 TB/day active)</td></tr>
+        <tr><td>Read bandwidth at peak (360K × ~600B request+response)</td><td>~200 MB/s ≈ 1.6 Gbps egress per redirect tier</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Per-tier sizing — back of the envelope</h3>
+    <p>At staff level, the interesting math is not the headline QPS — it is how that QPS distributes across tiers once cache hits absorb the bulk.</p>
+
+    <table>
+      <thead>
+        <tr><th>Tier</th><th>Load at peak</th><th>Sizing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Edge / CDN</td><td>~70% of redirects (popular links)</td><td>Anycast PoPs; no origin capacity needed for hits</td></tr>
+        <tr><td>Redirect service (app)</td><td>~110K QPS post-CDN</td><td>~40–60 pods at ~2K QPS each (Go/Rust); CPU-bound on TLS + JSON</td></tr>
+        <tr><td>Redis cluster</td><td>~99K QPS (90% L2 hit)</td><td>6–10 shards × replica, ~50K ops/sec/node headroom</td></tr>
+        <tr><td>DB read (post-cache)</td><td>~10K QPS (1% miss × 110K)</td><td>3–6 Cassandra nodes per region @ RF=3, or Postgres + 5–10 read replicas</td></tr>
+        <tr><td>Write service</td><td>~3.5K QPS peak</td><td>10–20 pods; bottleneck is DB write, not app</td></tr>
+        <tr><td>Token range broker (ZK/etcd)</td><td>~1 claim per 1M IDs / server</td><td>3 or 5-node ensemble; load is trivial — only sized for HA quorum</td></tr>
       </tbody>
     </table>
 
     <aside class="callout callout-note">
-      <strong>Key insight —</strong> This is overwhelmingly read-heavy. Every architectural decision should be evaluated through the lens of the read path first.
+      <strong>Key insight —</strong> This is overwhelmingly read-heavy. Every architectural decision should be evaluated through the lens of the read path first. The CDN is the single biggest lever — every percentage point of edge hit ratio you give up shows up downstream as DB load.
     </aside>
 
     <!-- ======================== iii. High-Level Design ======================== -->
@@ -572,16 +593,24 @@
     <pre><code>Client
   │
   ▼
-[Load Balancer]
-  │              │
-  ▼              ▼
-[Write Service]  [Redirect Service]
-  │                    │
-  ▼                    ▼
-[Token Generator]   [Redis Cache]  ──miss──▶  [DB Read Replica]
-  │                                                │
-  ▼                                                │
-[DB Primary] ◀───────────────────────────────────┘</code></pre>
+[Geo-DNS / Anycast]  ──▶  [CDN Edge PoP]  ──hit──▶  302
+  │ miss
+  ▼
+[Regional Load Balancer]
+  │                     │
+  ▼                     ▼
+[Write Service]      [Redirect Service]  ──▶  [In-process LRU (L1)]
+  │                     │                        │ miss
+  │                     ▼                        ▼
+[ZK/etcd range]      [Redis Cluster (L2)]  ──miss──▶  [DB Read Replica]
+  │                     ▲                                      │
+  ▼                     │ async fill / invalidate              │
+[DB Primary]  ──────────┴──────────────────────────────────────┘
+  │
+  ▼ async
+[Kafka]  ──▶  [Analytics OLAP]   |   [Replication → other regions]</code></pre>
+
+    <p>Four caching layers sit between a redirect request and the database: browser cache (when using 301), CDN edge, in-process LRU on the redirect pod, then Redis. By the time a request reaches the database, three independent caches have agreed they do not know the answer — which itself is a useful signal (the URL is either cold or non-existent).</p>
 
     <h3>Write path</h3>
     <ol>
@@ -652,32 +681,85 @@
     </aside>
 
     <h3>Database Choice</h3>
-    <p>See <a href="../patterns/database-selection.html">patterns/database-selection</a> for the full decision framework.</p>
+    <p>See <a href="../patterns/database-selection.html">patterns/database-selection</a> for the full decision framework. The access pattern here is almost the textbook case for a wide-column store: a single equality lookup on a high-cardinality key, no joins, no range scans on the hot path, and a write that never updates an existing row.</p>
 
-    <pre><code>short_code  VARCHAR(7)   PRIMARY KEY
-long_url    TEXT
-user_id     BIGINT
-created_at  TIMESTAMP
-expires_at  TIMESTAMP    NULLABLE</code></pre>
+    <h4>Schema — Cassandra</h4>
+    <pre><code>CREATE TABLE urls (
+  short_code   text PRIMARY KEY,
+  long_url     text,
+  user_id      bigint,
+  created_at   timestamp,
+  expires_at   timestamp,
+  is_custom    boolean,
+  is_disabled  boolean   -- soft-delete tombstone for abuse takedowns
+) WITH compaction = {'class':'LeveledCompactionStrategy'}
+  AND default_time_to_live = 0
+  AND gc_grace_seconds = 864000;</code></pre>
 
+    <p><code>short_code</code> is the partition key — every redirect is a single-partition read, the cheapest operation Cassandra offers. Leveled compaction is chosen over Size-Tiered because reads are random and we want bounded read amplification (≤ ~10 SSTables touched per query in steady state).</p>
+
+    <h4>Replication &amp; consistency</h4>
     <ul>
-      <li><strong>Postgres</strong> works for &lt; ~500M rows with proper indexing</li>
-      <li><strong>Cassandra</strong> at scale: partition key = <code>short_code</code> → O(1) lookup, multi-region replication, eventual consistency acceptable</li>
+      <li><strong>Replication factor:</strong> RF = 3 per region, deployed across three availability zones</li>
+      <li><strong>Write consistency:</strong> <code>LOCAL_QUORUM</code> (2 of 3) — survives a single-AZ outage without losing write availability</li>
+      <li><strong>Read consistency:</strong> <code>LOCAL_ONE</code> on the redirect path — minimal latency, eventual is acceptable for an idempotent redirect</li>
+      <li><strong>Read consistency for custom alias availability check:</strong> <code>LOCAL_SERIAL</code> via lightweight transaction (LWT, Paxos-backed) — prevents two users grabbing the same custom alias under a race</li>
+      <li><strong>Cross-region:</strong> async multi-DC replication; do not require <code>EACH_QUORUM</code> on the hot path or you will inherit cross-region RTT (~150 ms)</li>
+    </ul>
+
+    <h4>Secondary access — queries by <code>user_id</code></h4>
+    <p>Cassandra's golden rule: one table per query pattern. Do not use a secondary index on <code>user_id</code> at scale — it scatter-gathers across nodes and degrades non-linearly. Instead, denormalize:</p>
+    <pre><code>CREATE TABLE urls_by_user (
+  user_id     bigint,
+  created_at  timestamp,
+  short_code  text,
+  long_url    text,
+  PRIMARY KEY ((user_id), created_at, short_code)
+) WITH CLUSTERING ORDER BY (created_at DESC);</code></pre>
+    <p>Both tables are written in the write path. The cost is ~2× write amplification, which is fine — writes are 1% of traffic. The benefit is that "list my links" becomes a single-partition range read.</p>
+
+    <h4>Postgres alternative — when it's enough</h4>
+    <ul>
+      <li>Single-region, &lt; ~500M rows, write QPS &lt; ~5K sustained</li>
+      <li>Index <code>short_code</code> with a hash index (Postgres 10+) or BTREE; BTREE wins if you ever want range scans</li>
+      <li>Partition the <code>urls</code> table by <code>created_at</code> month for cheap expiration cleanup (<code>DROP PARTITION</code> instead of <code>DELETE</code>)</li>
+      <li>Streaming replication to 5–10 read replicas; route reads with a connection-pool-level read/write split (pgbouncer + a router)</li>
     </ul>
 
     <aside class="callout callout-note">
-      <strong>Decision —</strong> Start with Postgres. Migrate to Cassandra if write QPS or storage forces it. Don't prematurely distribute.
+      <strong>Decision —</strong> Start with Postgres if you're &lt; 500M rows and single-region. Move to Cassandra when (a) write QPS sustains &gt; 5K, (b) storage exceeds what one node fits comfortably (~5 TB working set), or (c) multi-region with active-active becomes a requirement. The migration cost is real — do not pay it pre-emptively.
     </aside>
 
     <h3>Caching</h3>
-    <p>See <a href="../patterns/caching.html">patterns/caching</a> for full strategies.</p>
+    <p>See <a href="../patterns/caching.html">patterns/caching</a> for full strategies. The right framing for this system is not "add a cache" but "build a four-layer cache hierarchy where each layer absorbs an order of magnitude more traffic than the next."</p>
+
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Where</th><th>Target hit rate</th><th>Latency</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>L0 — Browser</td><td>Client (via 301 + <code>Cache-Control</code>)</td><td>Variable — depends on user behavior</td><td>0 ms (no network)</td></tr>
+        <tr><td>L1 — CDN edge</td><td>CloudFront / Fastly / Cloudflare PoP</td><td>60–80% of redirects</td><td>5–20 ms</td></tr>
+        <tr><td>L2 — In-process LRU</td><td>Redirect pod heap (Caffeine / Ristretto)</td><td>~50% of post-CDN traffic</td><td>&lt; 0.01 ms</td></tr>
+        <tr><td>L3 — Redis cluster</td><td>Regional Redis</td><td>~90% of post-LRU traffic</td><td>~0.5 ms</td></tr>
+        <tr><td>Origin — DB</td><td>Cassandra / Postgres</td><td>≤ 1% of original request volume</td><td>1–5 ms</td></tr>
+      </tbody>
+    </table>
+
     <ul>
-      <li><strong>Strategy:</strong> Cache-aside on read path</li>
-      <li><strong>TTL:</strong> Match URL expiry, or 24h default for non-expiring URLs</li>
-      <li><strong>Eviction:</strong> LRU — naturally keeps hot links warm</li>
-      <li><strong>Cache stampede:</strong> Mutex lock on cache miss for the same key; or probabilistic early recompute</li>
-      <li><strong>Cache key:</strong> <code>short_code</code> → <code>long_url</code></li>
+      <li><strong>Strategy:</strong> Cache-aside on read path. On miss, the pod (not Redis) reads the DB and writes to L3; L2 is populated naturally by the same pod over its next requests</li>
+      <li><strong>Cache key:</strong> <code>url:{short_code}</code> → <code>long_url</code>. Keep values small (&lt; 2 KB); store metadata as a separate <code>meta:{short_code}</code> key only if expiry/disabled checks are needed</li>
+      <li><strong>TTL:</strong> <code>min(24h, expires_at - now)</code> with ±10% jitter to avoid synchronized expiry storms</li>
+      <li><strong>Eviction:</strong> Redis <code>allkeys-lru</code> (approximate LRU); never run Redis at 100% memory — set <code>maxmemory</code> with ~20% headroom</li>
+      <li><strong>Negative caching:</strong> 404s are cached too — <code>url:{code} = "__MISS__"</code> with a 60 s TTL. Without this, enumeration attacks (or a single bad QR scan) can repeatedly punch through to the DB</li>
+      <li><strong>Bloom filter:</strong> A short-code-existence bloom filter (sized for 1B keys with 1% FPR → ~1.2 GB) sits in front of the DB. Membership check is ~150 ns. Most non-existent codes never reach Redis or DB at all</li>
+      <li><strong>Stampede protection:</strong> Per-key in-process singleflight (Go-style request coalescing) so 10K concurrent misses on the same key become one DB read. Stack a Redis-side mutex (<code>SET NX EX 5s</code>) when the in-process layer can't help (cross-pod misses)</li>
+      <li><strong>Stale-while-revalidate:</strong> On the CDN layer, serve the stale URL while async-refetching the origin. Acceptable because URL→long_url is functionally immutable for the life of a code</li>
     </ul>
+
+    <aside class="callout callout-tip">
+      <strong>The elegant move —</strong> short_code → long_url is one of the few mappings in a real system that is genuinely immutable once written. Treat it that way: long TTLs, aggressive edge caching, and design invalidation as a rare event (only abuse takedowns and explicit expiration).
+    </aside>
 
     <!-- ======================== v. Deep Dives ======================== -->
     <h2 class="section-h2"><span class="section-num">v.</span> Deep Dives</h2>
@@ -705,45 +787,261 @@ expires_at  TIMESTAMP    NULLABLE</code></pre>
       <li>Never block the redirect on analytics writes</li>
     </ul>
 
-    <!-- ======================== vi. Failure Modes ======================== -->
-    <h2 class="section-h2"><span class="section-num">vi.</span> Failure Modes &amp; Mitigations</h2>
+    <!-- ======================== vi. Bottlenecks by Tier ======================== -->
+    <h2 class="section-h2"><span class="section-num">vi.</span> Bottlenecks by Tier</h2>
+
+    <p>Every system has a binding constraint. The interesting question at staff level is not "is this fast?" but "which tier saturates first, and what does it take to lift that ceiling?" Below is the redirect path ceiling at each layer with realistic single-instance numbers, and what you do when you hit them.</p>
 
     <table>
       <thead>
-        <tr><th>Failure</th><th>Impact</th><th>Mitigation</th></tr>
+        <tr><th>Tier</th><th>Practical ceiling</th><th>Binding resource</th><th>Lift</th></tr>
       </thead>
       <tbody>
-        <tr><td>DB primary down</td><td>Writes fail</td><td>Leader election / failover (Postgres streaming replication)</td></tr>
-        <tr><td>Cache down</td><td>All reads hit DB</td><td>DB read replicas; cache is optimization not dependency</td></tr>
-        <tr><td>Zookeeper down</td><td>New URL creation fails</td><td>Pre-fetched ranges allow ~1M URLs before blocking</td></tr>
-        <tr><td>Hash collision (if hash-based)</td><td>Wrong redirect</td><td>Check-on-write; retry with different hash seed</td></tr>
+        <tr><td>DNS / GSLB</td><td>essentially unbounded</td><td>none (delegated)</td><td>Use anycast + edge resolvers; never homegrown</td></tr>
+        <tr><td>L7 load balancer (single)</td><td>~100K RPS, ~10 Gbps</td><td>CPU on TLS termination, conntrack</td><td>Horizontal scale; offload TLS to dedicated tier; use HTTP/2 multiplexing</td></tr>
+        <tr><td>Redirect pod</td><td>~2–5K RPS (Go/Rust), ~500 RPS (Node/Python)</td><td>CPU; allocations on hot path</td><td>Add pods; zero-allocation request path; HPA on CPU + p99 latency</td></tr>
+        <tr><td>In-process LRU (L2)</td><td>millions of ops/sec/pod</td><td>none — heap-bound</td><td>Size to ~100K hottest keys; Caffeine/Ristretto, never <code>map[string]string</code></td></tr>
+        <tr><td>Redis node</td><td>~80–100K ops/sec</td><td>Single-threaded command loop</td><td>Shard by short_code hash; add replicas for reads; pipeline batched lookups</td></tr>
+        <tr><td>Cassandra node</td><td>~10–30K reads/sec; ~30–50K writes/sec</td><td>Disk IOPS on reads; compaction on writes</td><td>Add nodes (linear); LCS for read-heavy; SSDs/NVMe always</td></tr>
+        <tr><td>Postgres primary (single)</td><td>~5–10K writes/sec, ~20–40K reads/sec</td><td>WAL fsync; lock contention</td><td>Read replicas; logical sharding by short_code prefix; eventually migrate</td></tr>
+        <tr><td>ZK / etcd range broker</td><td>~1 RPS (claims are rare)</td><td>none</td><td>3 or 5-node ensemble; pre-claim ranges on pod startup</td></tr>
+        <tr><td>Cross-region link</td><td>RTT, not bandwidth</td><td>~150 ms RTT</td><td>Region-local reads; async replication; never call across regions on hot path</td></tr>
+      </tbody>
+    </table>
+
+    <aside class="callout callout-tip">
+      <strong>The elegant move —</strong> The system's true bottleneck is almost never the DB at the bottom — it's the first tier that can't horizontally scale. For most URL shorteners that's the L7 LB if TLS isn't offloaded, or Redis if shards are too coarse. Identify it explicitly in the interview.
+    </aside>
+
+    <!-- ======================== vii. Hot Keys & Viral URLs ======================== -->
+    <h2 class="section-h2"><span class="section-num">vii.</span> Hot Keys &amp; Viral URLs</h2>
+
+    <p>A Super Bowl ad goes live with <code>tinyurl.com/sb-ad</code>. Within 30 seconds that one short code accounts for 10M hits/min — 90% of total system traffic on a single key. This is the classic <em>hot key</em> problem, and it is the single failure mode most likely to bring a URL shortener down in production.</p>
+
+    <h4>Why it hurts</h4>
+    <ul>
+      <li>The Redis shard owning that key sees all of the L3 traffic for that key on one CPU core (Redis is single-threaded)</li>
+      <li>If the L2 in-process cache misses on a fresh pod, the new pod hammers Redis for the same key during the warm-up window</li>
+      <li>The DB shard owning that key takes the same disproportionate load on any cache miss</li>
+    </ul>
+
+    <h4>Mitigations — layered</h4>
+    <ol>
+      <li><strong>CDN absorbs the brunt.</strong> A correctly configured CDN sees one origin pull per PoP per TTL window. At ~300 PoPs and a 5-minute TTL, the origin sees ~3,600 pulls/hour for a hot URL regardless of how viral it gets</li>
+      <li><strong>In-process LRU with long TTL.</strong> A 100K-entry LRU per pod means a viral key sits permanently in memory after the first request. Use Caffeine (Java), Ristretto (Go), or moka (Rust) — admission-based caches resist scan pollution</li>
+      <li><strong>Key splitting (hot key sharding).</strong> Maintain N replicas of the hot key in Redis (<code>url:abc:0</code> … <code>url:abc:9</code>) and route requests by request hash. Spreads single-key load across N shards. Implement only after detection — most keys don't need this</li>
+      <li><strong>Read from any replica.</strong> In Cassandra, <code>LOCAL_ONE</code> reads can land on any of the RF=3 replicas — three nodes serve the single hot partition concurrently. Add replicas (RF=5) for known-viral campaigns</li>
+      <li><strong>Hot key detection.</strong> Sample 1% of requests, count by short_code in a sliding window (count-min sketch in Redis or in-memory). When a code exceeds a threshold (e.g., 1K QPS to origin), auto-promote it to in-process LRU with infinite TTL and increase CDN TTL via API</li>
+      <li><strong>Pre-warming.</strong> For known campaigns (Super Bowl, product launch), the customer can request pre-warming — the system pushes the entry into every pod's L2 and Redis before the campaign starts</li>
+    </ol>
+
+    <aside class="callout callout-warn">
+      <strong>Watch out —</strong> Hot keys are the asymmetric risk of this system. 99.9% of keys behave; the 0.1% that go viral can saturate any single component if you didn't think about it. Always raise this in the interview — it signals you've operated this kind of system, not just designed it.
+    </aside>
+
+    <!-- ======================== viii. Multi-Region Architecture ======================== -->
+    <h2 class="section-h2"><span class="section-num">viii.</span> Multi-Region Architecture</h2>
+
+    <p>A global URL shortener cannot serve every redirect from one region — a request from Tokyo to a US-East origin pays ~150 ms RTT before the first byte. The interesting design question is what is regional-local vs globally coordinated.</p>
+
+    <h3>Routing</h3>
+    <ul>
+      <li><strong>Geo-DNS or anycast</strong> routes the user to the nearest regional cluster. AWS Global Accelerator / CloudFront, GCP Cloud Load Balancing, or DNS-based (Route53 latency routing)</li>
+      <li><strong>Redirect path is region-local.</strong> A US user resolves to the US region, hits the US CDN, US Redis, US Cassandra replica. Zero cross-region traffic on the hot path</li>
+    </ul>
+
+    <h3>Write replication</h3>
+    <ul>
+      <li><strong>Cassandra multi-DC</strong> with NetworkTopologyStrategy: writes commit at <code>LOCAL_QUORUM</code> in the originating region; async replication to other DCs with typical propagation &lt; 1 s</li>
+      <li><strong>Consequence:</strong> a user in Mumbai creating a short URL and immediately scanning the QR from Tokyo may briefly hit "not found" on Tokyo's replica. Acceptable for &gt; 99.99% of cases; rare edge case is handled below</li>
+      <li><strong>Read-your-writes</strong> on the same region is guaranteed because the user's session is sticky to one region; cross-region read-your-writes is not promised</li>
+    </ul>
+
+    <h3>Token range coordination</h3>
+    <ul>
+      <li><strong>Global counter, regional ranges.</strong> A single global ZK/etcd ensemble (3 or 5 nodes, geographically diverse) is the source of truth for the next available counter block. Each region claims ranges of 1M IDs and assigns sub-ranges to local pods</li>
+      <li><strong>Region-prefixed ranges</strong> as an alternative: bake the region ID into high bits of the counter. Removes global coordination at the cost of slightly less compact codes</li>
+      <li><strong>Custom alias coordination</strong> is genuinely hard: two users in different regions could request <code>/launch</code> at the same time. Solve with a globally-consistent registration step — a single primary region for alias reservations, or a CRDT-friendly "first-write-wins by timestamp + region tiebreak" rule. Document the chosen semantics</li>
+    </ul>
+
+    <h3>RPO &amp; RTO</h3>
+    <table>
+      <thead>
+        <tr><th>Failure scenario</th><th>RPO</th><th>RTO</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AZ failure within region</td><td>0 (LOCAL_QUORUM survives)</td><td>~30 s (LB health check + retry)</td></tr>
+        <tr><td>Full region failure</td><td>~1 s (async replication lag)</td><td>~5 min (DNS failover) or instant (anycast)</td></tr>
+        <tr><td>Cassandra cluster corruption (logical)</td><td>up to backup interval</td><td>hours (restore + replay)</td></tr>
+      </tbody>
+    </table>
+
+    <aside class="callout callout-note">
+      <strong>Design principle —</strong> The redirect path is a strict P0 — anycast routing means a regional failure is transparent. The write path is P1 — short outages during regional failover are acceptable because writes are a small fraction of traffic and a failed write can be retried.
+    </aside>
+
+    <!-- ======================== ix. Failure Modes ======================== -->
+    <h2 class="section-h2"><span class="section-num">ix.</span> Failure Modes &amp; Mitigations</h2>
+
+    <p>The four-row table from a junior design is replaced here with a systematic walk through what breaks in production, why, and what the mitigation looks like. Group by where the failure originates.</p>
+
+    <h3>Infrastructure failures</h3>
+    <table>
+      <thead>
+        <tr><th>Failure</th><th>Blast radius</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Single redirect pod OOM / crash</td><td>One pod's in-flight requests fail</td><td>Multiple replicas behind LB; readiness probes; circuit breakers in clients; pod disruption budget &gt; 1</td></tr>
+        <tr><td>Single Redis shard down</td><td>~1/N of cached keys evaporate; reads fall through to DB</td><td>Redis Cluster with replicas (1 primary + 1 replica per shard); auto-failover via Sentinel/Cluster gossip; DB must absorb the surge — see &quot;cache miss storm&quot; below</td></tr>
+        <tr><td>Entire Redis cluster down</td><td>All L3 traffic falls through to DB (~10× expected DB load)</td><td>L2 in-process LRU continues to absorb the hottest keys; DB has 2× headroom; concurrency limiter on app→DB connections drops excess requests with 503 rather than queuing</td></tr>
+        <tr><td>DB primary down (Postgres)</td><td>Writes fail; reads on replicas still work</td><td>Patroni / Stolon orchestrated failover; promote replica in ~30 s; client-side connection retries with exponential backoff</td></tr>
+        <tr><td>Cassandra node down</td><td>One of three replicas unavailable for that partition</td><td>QUORUM still satisfied with 2/3; node replacement within 24h before hint expiry; repair on rejoin</td></tr>
+        <tr><td>Full AZ outage</td><td>1/3 of capacity offline</td><td>Multi-AZ deployment with 50% spare capacity per zone; cross-AZ LB routing</td></tr>
+        <tr><td>Full region outage</td><td>All requests in that region</td><td>Anycast / DNS failover to another region; region must be sized for ~1.5× steady state to absorb the spillover</td></tr>
+        <tr><td>ZK / etcd quorum loss</td><td>New token range claims fail</td><td>Each pod pre-claims a 1M-ID range at startup → ~14 minutes of write headroom at 1.2K QPS before any pod needs to re-claim; ZK quorum restored long before that</td></tr>
+        <tr><td>CDN partial outage</td><td>Cache miss surge to origin (3–10× normal)</td><td>Multi-CDN strategy (Fastly + CloudFront active-active by DNS); origin shield layer between CDN and origin to dedupe surges</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Data-path pathologies</h3>
+    <table>
+      <thead>
+        <tr><th>Failure</th><th>Symptom</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cache stampede on TTL expiry</td><td>10K simultaneous misses on the same key → 10K DB reads</td><td>Singleflight per pod; Redis-side mutex via <code>SET NX</code>; stale-while-revalidate at CDN; jittered TTL</td></tr>
+        <tr><td>Hot key saturating one Redis shard</td><td>One CPU core at 100%, p99 spikes on that shard</td><td>L2 in-process LRU; key splitting (replicate hot key N ways); auto-detect via sampled counters</td></tr>
+        <tr><td>Cache miss storm post-deploy</td><td>Fresh pods have empty L2 → temporary surge to L3 and DB</td><td>Rolling deploy with low surge (10% at a time); request shadowing to warm new pods before they take traffic; readiness probe gates on cache warm</td></tr>
+        <tr><td>Replication lag spike (Postgres)</td><td>Read-replica serves stale data; "I just created it but get 404"</td><td>Route the immediate post-write read to the primary for N seconds (read-your-writes); monitor replication lag and remove replica from LB pool when lag &gt; threshold</td></tr>
+        <tr><td>Cassandra read amplification on SSTable buildup</td><td>p99 read latency climbs with compaction backlog</td><td>Monitor pending compactions; throttle writes during incidents; increase compaction throughput; size disk for 2× working set</td></tr>
+        <tr><td>Token range exhaustion at one pod</td><td>Pod blocks new writes mid-range</td><td>Claim next range proactively at 80% consumed, not 100% — overlap the claim with continued writes</td></tr>
+        <tr><td>Clock skew between pods (if Snowflake used)</td><td>Out-of-order or colliding IDs</td><td>NTP enforcement; refuse to issue IDs when clock drift &gt; 50 ms; counter-range strategy avoids this entirely (it's deterministic)</td></tr>
+        <tr><td>Hash collision (hash-based generation only)</td><td>Wrong long URL returned — silent correctness bug</td><td>Don't use truncated hashes for primary generation; if dedup is wanted, store and check, never trust the hash alone</td></tr>
+        <tr><td>Poison row (single corrupted record)</td><td>Repeated retries amplify load</td><td>Per-key circuit breaker; quarantine the row; emit alert with short_code so operations can investigate</td></tr>
+        <tr><td>Disk full on Cassandra node</td><td>Writes fail; node may enter read-only or crash</td><td>Capacity planning at 50% disk utilization steady state; alerts at 70%; archival of expired URLs to cold storage</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Operational &amp; deployment failures</h3>
+    <table>
+      <thead>
+        <tr><th>Failure</th><th>Symptom</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Bad deploy crashes redirect pods</td><td>Error rate spike, latency spike</td><td>Canary deploy (1% → 10% → 100%); automatic rollback on SLO violation; deploy frozen during high-traffic windows</td></tr>
+        <tr><td>Schema migration on Cassandra</td><td>Inconsistent schema across nodes</td><td>Migrations gated through a coordinator; schema agreement check before considering migration complete</td></tr>
+        <tr><td>Dependency upgrade (Redis 7→8) misbehavior</td><td>Subtle correctness issues</td><td>Shadow cluster running new version; mirror 1% of traffic; compare responses before cutover</td></tr>
+        <tr><td>Backup restore wipes recent writes</td><td>Data loss</td><td>Point-in-time recovery (continuous WAL archiving); commit-log replay for Cassandra; pre-restore snapshot before any destructive operation</td></tr>
+        <tr><td>Runaway analytics consumer falls behind</td><td>Kafka backlog grows, eventual storage pressure</td><td>Click events use dedicated topic with separate retention; analytics is async and never blocks the redirect</td></tr>
       </tbody>
     </table>
 
     <aside class="callout callout-warn">
-      <strong>Watch out —</strong> Design the system so cache is an optimization, not a dependency. If Redis goes down, reads must still work — just slower. Size your DB read replicas accordingly.
+      <strong>Watch out —</strong> Design the system so the cache is an optimization, not a dependency. If Redis goes down, reads must still work — just slower. Size your DB read capacity for the cache-down case, or you've built a system whose &quot;steady state&quot; secretly requires every component to be healthy.
     </aside>
 
-    <!-- ======================== vii. Key Takeaways ======================== -->
-    <h2 class="section-h2"><span class="section-num">vii.</span> Key Takeaways</h2>
+    <!-- ======================== x. Security & Abuse ======================== -->
+    <h2 class="section-h2"><span class="section-num">x.</span> Security &amp; Abuse</h2>
 
+    <p>A URL shortener is a redirect-as-a-service that anyone on the internet can write to. That makes it a magnet for abuse, and the abuse pathway is usually more damaging to the business than the technical failure modes. Staff-level system design accounts for this from day one.</p>
+
+    <h3>Threat model</h3>
+    <table>
+      <thead>
+        <tr><th>Threat</th><th>Risk</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Phishing / malware redirect</td><td>Brand damage; potential CSAM / regulatory exposure</td><td>Scan target URL at write time against Google Safe Browsing, PhishTank, and an internal blocklist; async re-scan periodically; <code>is_disabled</code> tombstone for takedowns (instant, no DB delete)</td></tr>
+        <tr><td>Open-redirect abuse for phishing</td><td>Attacker uses your domain to mask a malicious URL in an email</td><td>Interstitial warning page for URLs with low age + low click count; reputation scoring</td></tr>
+        <tr><td>Enumeration of sequential short codes</td><td>Scraping all URLs exposes private links</td><td>Counter-based IDs leak business metrics (total URL count) and are enumerable. Mitigations: (a) randomize within the assigned range, (b) sparse base62 with a permutation step, or (c) use UUIDv7 prefix + truncate for the short code. Trade-off: harder to debug</td></tr>
+        <tr><td>DDoS on a single short code</td><td>Hot-key amplification used as an attack vector</td><td>Per-IP and per-short-code rate limiting at the edge; CAPTCHA challenge above threshold; the CDN must absorb &mdash; never let the attack reach origin</td></tr>
+        <tr><td>DDoS on write endpoint</td><td>Range exhaustion, DB write saturation</td><td>Hard per-IP write rate limit (e.g., 60/min anonymous, higher with API key); CAPTCHA for anonymous writes; bot detection (header/timing heuristics)</td></tr>
+        <tr><td>Custom alias squatting</td><td>Reserving common words / brand names</td><td>Reserved-word blocklist (legal + product); rate-limit custom aliases (1 per minute per user); paid tier for premium aliases</td></tr>
+        <tr><td>Long URL points back to the shortener</td><td>Redirect loop, DoS amplification</td><td>Resolve target URL at write time; reject self-referential or loop-prone targets; cap redirect chain depth at the client level</td></tr>
+        <tr><td>GDPR / right-to-erasure</td><td>User requests deletion of their links and click history</td><td>Per-user deletion API; <code>is_disabled = true</code> on URLs; tombstone propagates to caches via invalidation; analytics anonymized at ingestion (no raw IPs after N days)</td></tr>
+        <tr><td>Audit / forensics</td><td>Law enforcement requests, takedown traceability</td><td>Append-only audit log of writes and takedowns; retention policy aligned with jurisdiction; signed log entries</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Takedown propagation</h4>
+    <p>When abuse is detected, the URL must stop redirecting <em>fast</em>. The flow:</p>
     <ol>
-      <li><strong>Read-heavy → cache everything on the read path.</strong> Redis in front of DB is the single biggest win.</li>
-      <li><strong>Base62 + counter is cleaner than hashing</strong> for uniqueness guarantees at scale.</li>
-      <li><strong>Zookeeper range pre-fetch</strong> lets write servers operate independently — no lock contention.</li>
-      <li><strong>301 vs 302</strong> is a real trade-off interviewers notice. Know when you'd choose each.</li>
-      <li><strong>Cassandra's partition-key model</strong> is a perfect fit for pure key-value access.</li>
-      <li><strong>Separate write and redirect services</strong> — they have completely different scaling profiles.</li>
+      <li>Set <code>is_disabled = true</code> in DB (single write, immediately consistent within region)</li>
+      <li>Publish <code>invalidate:url:{code}</code> to a Redis pub/sub channel — all redirect pods drop their L2 entry</li>
+      <li><code>DEL url:{code}</code> in Redis cluster</li>
+      <li>Issue a CDN purge for the redirect URL via the CDN API</li>
+      <li>The whole flow completes in &lt; 5 s globally; downstream redirects return a takedown page (HTTP 410 Gone, not 404)</li>
     </ol>
 
-    <!-- ======================== viii. Go Deeper ======================== -->
-    <h2 class="section-h2"><span class="section-num">viii.</span> Go Deeper</h2>
+    <!-- ======================== xi. Observability ======================== -->
+    <h2 class="section-h2"><span class="section-num">xi.</span> Observability &amp; SLOs</h2>
+
+    <h3>Service-level objectives</h3>
+    <table>
+      <thead>
+        <tr><th>SLI</th><th>Target (28-day window)</th><th>Error budget</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Redirect availability (HTTP 2xx/3xx ratio)</td><td>99.99%</td><td>~4.3 minutes / month</td></tr>
+        <tr><td>Redirect p50 latency (server-side)</td><td>&lt; 5 ms</td><td>—</td></tr>
+        <tr><td>Redirect p99 latency</td><td>&lt; 10 ms</td><td>—</td></tr>
+        <tr><td>Redirect p99.9 latency</td><td>&lt; 50 ms</td><td>—</td></tr>
+        <tr><td>Write availability</td><td>99.9%</td><td>~43 minutes / month — lower tier than reads</td></tr>
+        <tr><td>Write p99 latency</td><td>&lt; 100 ms</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Golden signals — per service</h3>
+    <ul>
+      <li><strong>Traffic:</strong> RPS at each tier (CDN, LB, app, Redis, DB); break out by region and by status code</li>
+      <li><strong>Errors:</strong> 4xx vs 5xx separated; 404 rate is a product metric (indicates broken or attacked codes), 5xx is a reliability metric</li>
+      <li><strong>Latency:</strong> p50, p99, p99.9 at each tier; latency budget allocation per tier sums to the SLO</li>
+      <li><strong>Saturation:</strong> CPU %, memory %, connection pool utilization, Redis memory used, Cassandra pending compactions</li>
+    </ul>
+
+    <h3>Key alerts</h3>
+    <ul>
+      <li>Page on: redirect availability burn rate &gt; 2% of monthly budget in 1 hour</li>
+      <li>Page on: p99 latency &gt; 50 ms for 5 minutes</li>
+      <li>Page on: Cassandra node down (RF=3 means one more failure = data loss)</li>
+      <li>Ticket on: any single short_code &gt; 1K QPS (hot key candidate)</li>
+      <li>Ticket on: Redis memory &gt; 80% used</li>
+      <li>Ticket on: token range claim rate &gt; expected (indicates a pod issue or unexpected write surge)</li>
+    </ul>
+
+    <h3>Tracing &amp; debugging</h3>
+    <ul>
+      <li><strong>Trace ID</strong> propagated through CDN → LB → app → Redis → DB so a slow request can be unwound across the stack</li>
+      <li><strong>Sampled tracing:</strong> 1% baseline, 100% for all 5xx and for any request &gt; 100 ms</li>
+      <li><strong>Cache hit/miss as a span attribute</strong> at every layer — the trace tells you exactly where time was spent</li>
+    </ul>
+
+    <!-- ======================== xii. Key Takeaways ======================== -->
+    <h2 class="section-h2"><span class="section-num">xii.</span> Key Takeaways</h2>
+
+    <ol>
+      <li><strong>Read-heavy → build a four-tier cache hierarchy.</strong> CDN → in-process LRU → Redis → DB. Each tier absorbs an order of magnitude. The CDN does the heaviest lifting.</li>
+      <li><strong>Base62 + counter beats hashing</strong> for uniqueness guarantees at scale. Counter ranges via ZK/etcd eliminate per-write coordination.</li>
+      <li><strong>Cassandra with <code>short_code</code> as partition key</strong> is the textbook fit. RF=3, LOCAL_QUORUM writes, LOCAL_ONE reads, LWT only for custom alias races.</li>
+      <li><strong>Cache is an optimization, never a dependency.</strong> Size the DB tier to absorb the cache-down case, or you've built a system that secretly requires every component to be healthy.</li>
+      <li><strong>Hot keys are the asymmetric risk.</strong> 99.9% of keys behave; the 0.1% that go viral can saturate one Redis shard, one Cassandra partition, one anything. Layer mitigations: CDN, in-process LRU, key splitting, replica fan-out.</li>
+      <li><strong>The redirect path is region-local.</strong> Anycast routing, region-local replicas, async cross-region replication. Never call across regions on the hot path.</li>
+      <li><strong>Abuse is the real failure mode.</strong> Phishing scans at write time, takedown propagation in seconds, enumeration-resistant ID schemes, rate limiting at the edge.</li>
+      <li><strong>Separate write and redirect services</strong> — they have completely different scaling profiles, SLOs, and failure tolerances. Don't deploy them together.</li>
+      <li><strong>301 vs 302</strong> is a real trade-off. 301 minimizes server load and enables browser caching; 302 keeps analytics flowing. The right answer depends on your product.</li>
+      <li><strong>Observability buys you the budget to ship boldly.</strong> SLOs with error budgets, golden signals at every tier, traces that span CDN to DB, and alerts that fire on burn rate — not on threshold crossings.</li>
+    </ol>
+
+    <!-- ======================== xiii. Go Deeper ======================== -->
+    <h2 class="section-h2"><span class="section-num">xiii.</span> Go Deeper</h2>
 
     <ul>
-      <li>How would you handle a viral URL that suddenly gets 10M hits/min?</li>
       <li>How would you implement URL preview (unfurl og:image) without slowing down the write path?</li>
-      <li>How would you shard the DB if short_code is the partition key but you also need queries by user_id?</li>
-      <li>Design the analytics system — how do you count unique visitors?</li>
+      <li>Design the analytics system — how do you count unique visitors using HyperLogLog while staying under storage and privacy constraints?</li>
+      <li>How would you migrate from Postgres to Cassandra without downtime — what's the dual-write / shadow-read plan?</li>
+      <li>How would you implement A/B-tested redirects (one short URL → different targets per user segment) without breaking caching?</li>
+      <li>If the system has to support 1M write QPS, what changes first — token generation, write service, or DB?</li>
+      <li>How would you build a privacy-preserving click-analytics pipeline that still gives the URL owner useful aggregates?</li>
     </ul>
 
     <!-- Ornament + prev/next -->

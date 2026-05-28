@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paste Bin — System Design &amp; Trade-offs</title>
+  <meta name="description" content="URL shortener plus content. Why object storage is the right answer at scale, how metadata and bytes live in different tiers, and the expiry pipeline that keeps the system clean.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    /* -------------------------------------------------------
+       Filter Coffee Way — System Design
+       Warm-paper editorial · design page
+       ------------------------------------------------------- */
+
+    :root {
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
+      --rule-2:      #d6c5a4;
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
+      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+
+      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, "Times New Roman", serif;
+      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 16px;
+      background-image:
+        radial-gradient(rgba(168, 90, 42, 0.035) 1px, transparent 1px),
+        radial-gradient(rgba(43, 29, 18, 0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 37px 37px;
+      background-position: 0 0, 11px 13px;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--ink); }
+
+    /* ---------- Container ---------- */
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+
+    /* ---------- Masthead ---------- */
+    .masthead {
+      padding: 22px 0 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .masthead-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
+    .wordmark-sub {
+      display: block;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-top: 4px;
+    }
+    .masthead nav {
+      display: flex; gap: 26px; flex-wrap: wrap;
+      font-size: 13px; font-weight: 500;
+    }
+    .masthead nav a {
+      color: var(--ink-2);
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color .15s, border-color .15s;
+    }
+    .masthead nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+
+    .issue-strip {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0 0;
+      font-family: var(--sans);
+      font-size: 10.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+
+    /* ---------- Article wrapper ---------- */
+    article {
+      max-width: 840px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Article header ---------- */
+    .article-header {
+      padding: 56px 0 40px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 48px;
+    }
+    .kicker {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .kicker::before {
+      content: ""; width: 28px; height: 1px; background: var(--accent);
+    }
+    .article-title {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: clamp(36px, 4.5vw, 56px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin: 8px 0 16px;
+    }
+    .article-title em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .article-dek {
+      font-family: var(--serif);
+      font-weight: 300;
+      font-style: italic;
+      font-size: 21px;
+      line-height: 1.4;
+      color: var(--ink-2);
+      max-width: 56ch;
+      margin-bottom: 28px;
+    }
+    .byline {
+      display: flex; flex-wrap: wrap; gap: 8px 14px;
+      font-size: 12px; color: var(--ink-3);
+      letter-spacing: 0.04em;
+      align-items: center;
+    }
+    .byline .sep { color: var(--rule-2); }
+    .byline .tag {
+      font-size: 11px;
+      padding: 2px 9px;
+      border: 1px solid var(--rule-2);
+      border-radius: 99px;
+      color: var(--ink-2);
+      background: var(--paper-2);
+    }
+
+    /* ---------- Stat block ---------- */
+    .stat-block {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 28px 30px;
+      box-shadow: var(--shadow);
+      position: relative;
+      margin-bottom: 56px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0;
+    }
+    .stat-block::before {
+      content: "AT A GLANCE";
+      position: absolute;
+      top: -9px; left: 22px;
+      background: var(--paper);
+      padding: 0 10px;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .stat {
+      display: flex; flex-direction: column;
+      padding: 14px 20px 14px 0;
+      border-right: 1px dashed var(--rule);
+      gap: 6px;
+    }
+    .stat:last-child { border-right: none; padding-right: 0; }
+    .stat:first-child { padding-left: 0; }
+    .stat-label {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .stat-value {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 26px;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+    .stat-value .unit {
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-3);
+      margin-left: 3px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ---------- Section headings ---------- */
+    .section-h2 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 28px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin: 56px 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .section-h2 .section-num {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 18px;
+      color: var(--accent);
+      margin-right: 10px;
+    }
+
+    /* ---------- Article prose ---------- */
+    article p {
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--ink-2);
+      margin: 0 0 18px;
+      max-width: 62ch;
+    }
+    article h3 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--ink);
+      margin: 32px 0 12px;
+      letter-spacing: -0.01em;
+    }
+    article h4 {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 24px 0 10px;
+    }
+    article ul, article ol {
+      margin: 0 0 18px 0;
+      padding-left: 0;
+      list-style: none;
+      max-width: 62ch;
+    }
+    article ul li, article ol li {
+      position: relative;
+      padding: 4px 0 4px 22px;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--ink-2);
+    }
+    article ul li::before {
+      content: "—";
+      position: absolute; left: 0;
+      color: var(--accent-soft);
+      font-weight: 500;
+    }
+    article ol { counter-reset: olist; }
+    article ol li { counter-increment: olist; }
+    article ol li::before {
+      content: counter(olist) ".";
+      position: absolute; left: 0;
+      color: var(--accent);
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 14px;
+    }
+    article strong { color: var(--ink); font-weight: 600; }
+    article em { font-style: italic; color: var(--ink); }
+
+    code {
+      font-family: var(--mono);
+      font-size: 13.5px;
+      color: var(--accent);
+      background: var(--paper-3);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+
+    /* ---------- Code blocks ---------- */
+    pre {
+      background: var(--paper-3);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 18px 22px;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      line-height: 1.55;
+    }
+    pre code {
+      color: var(--ink);
+      background: transparent;
+      padding: 0;
+      font-size: 13.5px;
+    }
+
+    /* ---------- Tables ---------- */
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 14.5px;
+    }
+    article th {
+      text-align: left;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 10px 14px;
+      background: var(--paper-2);
+      border-bottom: 1px solid var(--rule-2);
+    }
+    article td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink-2);
+      vertical-align: top;
+    }
+    article tr:last-child td { border-bottom: none; }
+    article td:first-child { color: var(--ink); font-weight: 500; }
+
+    /* ---------- Callout ---------- */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: var(--paper-2);
+      border-radius: 0 6px 6px 0;
+      padding: 14px 20px;
+      margin: 20px 0 24px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--ink-2);
+      max-width: 62ch;
+    }
+    .callout strong { color: var(--accent); font-weight: 600; }
+    .callout-note   { border-left-color: var(--accent); }
+    .callout-tip    { border-left-color: var(--ok); }
+    .callout-tip strong { color: var(--ok); }
+    .callout-warn   { border-left-color: var(--accent-soft); }
+    .callout-warn strong { color: var(--accent-soft); }
+
+    /* ---------- Pull quote ---------- */
+    .pull-quote {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 26px;
+      line-height: 1.35;
+      color: var(--ink);
+      margin: 36px 0;
+      padding: 12px 0 12px 28px;
+      border-left: 2px solid var(--accent);
+      max-width: 56ch;
+    }
+
+    /* ---------- Prev / next ---------- */
+    .prev-next {
+      display: flex; justify-content: space-between; gap: 24px;
+      padding: 40px 0;
+      border-top: 1px solid var(--rule);
+      margin-top: 64px;
+    }
+    .prev-next a { display: flex; flex-direction: column; gap: 4px; color: var(--ink); }
+    .pn-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+    .pn-title { font-family: var(--serif); font-size: 20px; color: var(--ink); }
+    .pn-next { text-align: right; }
+    .prev-next a:hover .pn-title { color: var(--accent); }
+
+    /* ---------- Ornament ---------- */
+    .ornament-divider {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px;
+      padding: 8px 0;
+      color: var(--accent);
+    }
+    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
+    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
+
+    /* ---------- Footer ---------- */
+    footer {
+      padding: 56px 0 80px;
+      border-top: 1px solid var(--rule);
+      margin-top: 24px;
+    }
+    .footer-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-mark {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--ink-2);
+    }
+    .footer-mark .accent { color: var(--accent); }
+    .footer-meta {
+      font-size: 12px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+    }
+    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
+    .footer-meta a:hover { color: var(--accent); }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .masthead-row { flex-direction: column; align-items: flex-start; }
+      .issue-strip { font-size: 9.5px; }
+      .stat-block { grid-template-columns: 1fr 1fr; }
+      .stat { border-right: none; border-bottom: 1px dashed var(--rule); padding: 14px 0; }
+      .stat:last-child { border-bottom: none; }
+      .prev-next { flex-direction: column; gap: 32px; }
+      .pn-next { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ====================== MASTHEAD ====================== -->
+  <header class="masthead">
+    <div class="masthead-row">
+      <div>
+        <a href="../index.html" style="text-decoration:none; display:flex; align-items:center; gap:14px;">
+          <img src="../assets/logo.svg" alt="Filter Coffee Way" width="36" height="36" style="border-radius:8px; flex-shrink:0;" />
+          <div>
+            <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
+            <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
+          </div>
+        </a>
+      </div>
+      <nav>
+        <a href="../about.html">About Filter Coffee</a>
+        <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
+        <a href="../index.html#designs">System Design</a>
+        <a href="url-shortener.html">URL Shortener</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    <div class="issue-strip">
+      <span>Vol. I &nbsp;·&nbsp; Issue 02</span>
+      <span><a href="../index.html" style="color:var(--ink-3);">← back to cover</a></span>
+      <span>MMXXVI</span>
+    </div>
+  </header>
+
+  <!-- ====================== ARTICLE ====================== -->
+  <article>
+
+    <!-- Article header -->
+    <header class="article-header">
+      <div class="kicker">Issue 02 · Design</div>
+      <h1 class="article-title">Paste <em>Bin</em></h1>
+      <p class="article-dek">URL shortener plus content. The moment the payload outgrows the row is the moment your architecture changes entirely.</p>
+      <div class="byline">
+        <span>Published <strong style="color:var(--ink-2);font-weight:500;">28 May 2026</strong></span>
+        <span class="sep">·</span>
+        <span class="tag">Medium</span>
+        <span class="tag">object storage</span>
+        <span class="tag">two-tier storage</span>
+        <span class="tag">expiry pipeline</span>
+        <span class="tag">CDN</span>
+        <span class="tag">NoSQL</span>
+      </div>
+    </header>
+
+    <!-- At-a-glance stat block -->
+    <div class="stat-block">
+      <div class="stat">
+        <span class="stat-label">Read / write ratio</span>
+        <span class="stat-value">10<span class="unit">: 1</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Peak QPS (reads)</span>
+        <span class="stat-value">3.5<span class="unit">K</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Latency target</span>
+        <span class="stat-value">&lt; 50<span class="unit">ms p99</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Avg paste size</span>
+        <span class="stat-value">10<span class="unit">KB</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Storage / 10 yr</span>
+        <span class="stat-value">~3.6<span class="unit">PB</span></span>
+      </div>
+    </div>
+
+    <!-- ======================== i. Requirements ======================== -->
+    <h2 class="section-h2"><span class="section-num">i.</span> Requirements</h2>
+
+    <h3>Functional</h3>
+    <ul>
+      <li>Create a paste: accepts text or code up to 10 MB, returns a short unique URL</li>
+      <li>Retrieve a paste by its short URL: serve the raw content</li>
+      <li>Optional expiration: never, 10 min, 1 hour, 1 day, 1 week, 1 month, or custom</li>
+      <li>Optional: syntax highlighting by language (client-side is fine)</li>
+      <li>Optional: password-protected pastes (read requires correct passphrase)</li>
+      <li>Optional: custom alias (vanity slug), burn-after-read mode</li>
+      <li>Optional: fork / clone an existing paste</li>
+    </ul>
+
+    <h3>Non-Functional</h3>
+    <ul>
+      <li><strong>Durability</strong> — content must not be lost; pastes are the product</li>
+      <li><strong>Availability</strong> — reads at 99.99%, writes at 99.9%</li>
+      <li><strong>Low read latency</strong> — p99 &lt; 50 ms (content may be large; time-to-first-byte is the target)</li>
+      <li><strong>Scalable storage</strong> — total content grows without bound; storage cost must be proportional to actual bytes</li>
+      <li>Read-heavy at ~10:1, skewed: popular pastes are fetched thousands of times, most are fetched once</li>
+    </ul>
+
+    <h3>Out of Scope</h3>
+    <ul>
+      <li>Real-time collaboration (Google Docs–style concurrent editing)</li>
+      <li>Full user account system, billing, teams</li>
+      <li>Server-side syntax highlighting at render time (offload to the client)</li>
+      <li>Diff / version history beyond forking</li>
+    </ul>
+
+    <!-- ======================== ii. Capacity Estimates ======================== -->
+    <h2 class="section-h2"><span class="section-num">ii.</span> Capacity Estimates</h2>
+
+    <table>
+      <thead>
+        <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>New pastes per day</td><td>10 million</td><td>1/10th of TinyURL — content is costlier to produce</td></tr>
+        <tr><td>Write QPS (avg)</td><td>~115</td><td>10M / 86,400</td></tr>
+        <tr><td>Write QPS (peak ≈ 3×)</td><td>~350</td><td></td></tr>
+        <tr><td>Read QPS (10:1, avg)</td><td>~1,150</td><td></td></tr>
+        <tr><td>Read QPS (peak)</td><td>~3,500</td><td></td></tr>
+        <tr><td>Average paste size</td><td>10 KB</td><td>Mix of tiny snippets and larger files; 95th pct &lt; 100 KB</td></tr>
+        <tr><td>Max paste size</td><td>10 MB</td><td>Hard cap; reject at ingress</td></tr>
+        <tr><td>Metadata record size</td><td>~1 KB</td><td>IDs, timestamps, TTL, content_key, owner, size</td></tr>
+        <tr><td>Content storage / year</td><td>10M × 365 × 10KB = ~36.5 TB</td><td></td></tr>
+        <tr><td>Content storage / 10 years</td><td>~365 TB to ~3.6 PB</td><td>Lower bound assumes aggressive expiration; upper bound is worst-case infinite retention</td></tr>
+        <tr><td>Metadata storage / 10 years</td><td>~36 TB</td><td>Fits in Cassandra comfortably</td></tr>
+        <tr><td>Read bandwidth at peak</td><td>3,500 × 10 KB = 35 MB/s ≈ 0.28 Gbps</td><td>Without CDN; with CDN the origin sees 10–20% of this</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Per-tier sizing — back of the envelope</h3>
+    <p>The read QPS looks modest (3,500) but the <em>byte</em> rate is not. CDN absorption is the single biggest lever, especially since popular pastes are fetched repeatedly.</p>
+
+    <table>
+      <thead>
+        <tr><th>Tier</th><th>Load at peak</th><th>Sizing</th><th>Binding resource</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CDN / Edge</td><td>~80% of reads (public popular pastes)</td><td>Anycast PoPs; no origin capacity needed for hits</td><td>Egress bandwidth</td></tr>
+        <tr><td>Read service (app)</td><td>~700 QPS post-CDN</td><td>5–10 pods; trivially small — the bottleneck is I/O not CPU</td><td>Open file handles / network to S3</td></tr>
+        <tr><td>Redis cluster</td><td>~630 QPS (90% L2 hit on post-CDN traffic)</td><td>2–4 shards; small pastes (&lt;4 KB) inline, larger just cache metadata</td><td>Memory (~10 GB/shard)</td></tr>
+        <tr><td>Object storage (S3)</td><td>~70 QPS (10% cache miss)</td><td>No sizing needed — S3 auto-scales; cost is the real metric</td><td>GET latency (~5–30 ms)</td></tr>
+        <tr><td>Metadata DB (Cassandra)</td><td>~70 QPS reads, ~350 QPS writes</td><td>3 nodes per region, RF=3</td><td>Write IOPS</td></tr>
+        <tr><td>Write service (app)</td><td>~350 QPS peak</td><td>3–5 pods; bottleneck is S3 PUT + DB write, not app CPU</td><td>S3 PUT latency</td></tr>
+        <tr><td>Expiry worker</td><td>Background; bursty on TTL boundaries</td><td>1–2 pods per region; reads expiry queue, deletes S3 + DB</td><td>S3 DELETE throughput</td></tr>
+      </tbody>
+    </table>
+
+    <aside class="callout callout-note">
+      <strong>Key insight —</strong> The QPS numbers here are small compared to URL shortener, but the storage footprint is orders of magnitude larger. The architecture is shaped by <em>bytes</em>, not requests. That is why object storage is the answer and why the read path's job is mostly cache coordination rather than query execution.
+    </aside>
+
+    <!-- ======================== iii. High-Level Design ======================== -->
+    <h2 class="section-h2"><span class="section-num">iii.</span> High-Level Design</h2>
+
+    <pre><code>Client
+  │
+  ▼
+[Geo-DNS / Anycast]
+  │
+  ▼
+[CDN Edge PoP]  ──hit (public paste)──▶  response (content from edge cache)
+  │ miss
+  ▼
+[Regional Load Balancer]
+  │                          │
+  ▼                          ▼
+[Read Service]          [Write Service]
+  │                          │
+  ├─▶ [Redis L2]             ├─▶ [ID Generator (base62)]
+  │    hit → return          ├─▶ [Object Storage: S3/GCS]  ──▶  content bytes
+  │    miss ↓                └─▶ [Metadata DB: Cassandra]  ──▶  row (id, ttl, key, …)
+  ├─▶ [Metadata DB]
+  │    get content_key
+  │
+  └─▶ [Object Storage: S3/GCS]  ──▶  stream content bytes to client
+
+[Expiry Worker] ──reads TTL queue──▶ deletes S3 object + DB row</code></pre>
+
+    <p>The core split: <strong>metadata</strong> (paste ID, expiry, owner, content_key, size, language) lives in Cassandra; <strong>content bytes</strong> live in object storage (S3). The read service stitches them together. This split is the central design decision — everything downstream follows from it.</p>
+
+    <p>For small pastes (&lt;4 KB), content is stored <em>inline</em> in the Cassandra row and the S3 hop is skipped entirely. The 4 KB threshold keeps the DB row under the Cassandra recommended limit for inline blobs while eliminating the object storage round-trip for the majority of pastes (code snippets, config fragments, short logs).</p>
+
+    <!-- ======================== iv. Key Design Decisions ======================== -->
+    <h2 class="section-h2"><span class="section-num">iv.</span> Key Design Decisions</h2>
+
+    <h3>ID scheme</h3>
+    <p>Same base62 approach as the URL shortener — a 7-character slug gives 62⁷ ≈ 3.5 trillion unique IDs, enough for any realistic horizon. ID generation uses a distributed counter with ZooKeeper-coordinated ranges: each write pod claims a range of 1 million IDs, burns through them locally (no coordination per write), then claims another. Collision is structurally impossible within a range.</p>
+    <p>For custom aliases, the write path does a Cassandra LWT (lightweight transaction) <code>INSERT IF NOT EXISTS</code> on the alias. Races are rare; LWT handles them correctly without distributed locks.</p>
+
+    <h3>The inline vs. object storage split</h3>
+
+    <table>
+      <thead>
+        <tr><th>Paste size</th><th>Content storage</th><th>Read path</th><th>Rationale</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&lt; 4 KB</td><td>Cassandra row (<code>content_inline</code> blob column)</td><td>Single DB read, no S3 hop</td><td>Eliminates extra round-trip; ~50–60% of all pastes by count</td></tr>
+        <tr><td>4 KB – 10 MB</td><td>S3 object; Cassandra row stores <code>content_key</code></td><td>DB read for metadata + S3 GET for bytes</td><td>Keeps rows small; S3 is cheaper and more durable per byte than DB storage</td></tr>
+      </tbody>
+    </table>
+
+    <aside class="callout callout-tip">
+      <strong>Elegant move —</strong> The 4 KB threshold is not arbitrary. It is tuned so that the inline path handles the common case (quick snippets), while the S3 path handles pastes where the storage cost savings justify the extra latency. Revisit the threshold as workload evolves — it is a single config value.
+    </aside>
+
+    <h3>Database schema (Cassandra)</h3>
+    <p>Cassandra is chosen over Postgres for the same reasons as the URL shortener: the access pattern is a pure point lookup by <code>paste_id</code>, writes are heavy (10M/day × RF=3 = 30M physical writes), and the 10-year storage horizon demands horizontal scaling. A Postgres primary + replicas would work for the first two years; migrate at ~500M rows.</p>
+
+    <pre><code>-- Primary table: all reads go here
+CREATE TABLE pastes (
+  paste_id      text PRIMARY KEY,       -- base62 slug, e.g. "aB3kZ9m"
+  created_at    timestamp,
+  expires_at    timestamp,              -- null = never expires
+  owner_id      text,                   -- null for anonymous
+  language      text,                   -- "python", "sql", null
+  title         text,
+  size_bytes    int,
+  content_type  text,                   -- "inline" | "s3"
+  content_key   text,                   -- S3 key if content_type = "s3"
+  content_inline blob,                  -- raw bytes if content_type = "inline"
+  password_hash text,                   -- bcrypt hash; null = public
+  burn_on_read  boolean,
+  view_count    counter                 -- approximate; see note
+) WITH default_time_to_live = 0        -- TTL managed at app layer, not Cassandra native
+  AND compaction = { 'class': 'LeveledCompactionStrategy' };
+
+-- Expiry index: drives the cleanup worker
+CREATE TABLE pastes_by_expiry (
+  expiry_bucket text,    -- "2026-05-28T14" (hour granularity)
+  expires_at    timestamp,
+  paste_id      text,
+  PRIMARY KEY (expiry_bucket, expires_at, paste_id)
+) WITH CLUSTERING ORDER BY (expires_at ASC, paste_id ASC);
+
+-- Owner index: "my pastes" lookup (secondary access pattern)
+CREATE TABLE pastes_by_owner (
+  owner_id   text,
+  created_at timestamp,
+  paste_id   text,
+  title      text,
+  PRIMARY KEY (owner_id, created_at, paste_id)
+) WITH CLUSTERING ORDER BY (created_at DESC, paste_id ASC);</code></pre>
+
+    <p>Notes on schema decisions: <strong>Cassandra native TTL is not used</strong> for the main table because it fires on a per-row clock that cannot be changed after write. If an owner extends a paste's expiry, a native TTL would silently delete it anyway. App-layer expiry (checked at read time + async worker deletion) is more flexible. The <code>view_count</code> is a Cassandra counter column — approximate under concurrent increments, but accurate enough for analytics and "popular" ranking.</p>
+
+    <h3>Caching strategy</h3>
+
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>What is cached</th><th>TTL</th><th>Target hit rate</th><th>Latency</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Browser cache</td><td>Public paste content (Cache-Control: max-age)</td><td>Matches paste expiry or 1h for permanent</td><td>High for repeated local views</td><td>0 ms</td></tr>
+        <tr><td>CDN edge</td><td>Public paste responses (full HTTP response)</td><td>Matches paste expiry; private/password pastes excluded via <code>Cache-Control: private</code></td><td>~80% of public reads</td><td>~5–15 ms</td></tr>
+        <tr><td>In-process L1 (app pod)</td><td>Metadata for recently accessed pastes; small (&lt;4 KB) pastes in full</td><td>30s with jitter ±5s</td><td>~10% of post-CDN traffic</td><td>&lt;1 ms</td></tr>
+        <tr><td>Redis L2</td><td>Metadata + inline content; large pastes: metadata only + pre-signed S3 URL</td><td>TTL = min(paste expiry – now, 24h) with ±10% jitter</td><td>~85% of post-CDN traffic</td><td>~1–3 ms</td></tr>
+        <tr><td>Object storage (S3)</td><td>Source of truth for large paste content</td><td>Permanent (managed by lifecycle rules)</td><td>~5% of post-CDN traffic</td><td>~10–50 ms</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Negative caching:</strong> A missing paste_id (404) is cached in Redis for 60s with a sentinel value. Without this, a scan-and-fetch loop against random IDs would hammer Cassandra on every miss.</p>
+
+    <p><strong>Stampede protection:</strong> The read service uses Go's <code>singleflight</code> in-process for concurrent identical requests (a popular paste shared via social media sees a burst of simultaneous first-loads). At Redis level, only one request holds a distributed mutex to rebuild the cache entry; others wait with a 200ms timeout, then fall through to S3 directly if the mutex holder times out.</p>
+
+    <p><strong>Pre-signed S3 URLs:</strong> For large pastes, Redis caches a pre-signed S3 GET URL (valid 15 minutes) rather than the bytes themselves. The client is redirected to S3 directly, offloading bandwidth from the app tier entirely. This is the right trade-off when paste size is large enough that Redis memory cost exceeds S3 GET cost.</p>
+
+    <!-- ======================== v. Deep Dives ======================== -->
+    <h2 class="section-h2"><span class="section-num">v.</span> Deep Dives</h2>
+
+    <h3>Expiration pipeline</h3>
+    <p>Expiry is the feature that quietly makes the system hard. A paste with <code>expires_at = T</code> must stop being readable at T, and its bytes must eventually be deleted from S3 to reclaim storage. There are three components:</p>
+
+    <ol>
+      <li><strong>Read-time enforcement:</strong> Every read checks <code>expires_at</code> against <code>now()</code> in the metadata returned from Cassandra or Redis. Expired pastes return 404 immediately. This is the correctness layer — it fires even if the async cleanup worker is lagging.</li>
+      <li><strong>Expiry worker (async cleanup):</strong> A background service reads <code>pastes_by_expiry</code> in hour-bucket order. For each expired paste it: (a) deletes the S3 object if <code>content_type = "s3"</code>, (b) deletes the Cassandra rows across all three tables, (c) invalidates CDN cache via purge API, (d) deletes from Redis. Order matters: S3 first, then DB. If the worker crashes between S3 delete and DB delete, a subsequent read gets a 404 from the DB (expired) or a 404 from S3 (object gone) — either way correct. The reverse order (DB then S3) would leave orphaned bytes on S3 indefinitely.</li>
+      <li><strong>S3 lifecycle rules as backstop:</strong> A lifecycle rule on the S3 bucket tags objects at creation with <code>expires_at</code> and sets a lifecycle policy to delete objects after their tag date. This is a belt-and-suspenders measure — it catches anything the worker missed due to a multi-day outage.</li>
+    </ol>
+
+    <h3>Burn-after-read</h3>
+    <p>A paste with <code>burn_on_read = true</code> is deleted immediately after the first successful read. The implementation requires care: reading and deleting must be atomic-ish. The read service: (1) fetches metadata from DB, (2) checks burn flag, (3) if set, issues a Cassandra <code>DELETE</code> before returning the content to the client, (4) purges CDN and Redis. The window between step 3 and the CDN purge propagating is typically &lt; 5 seconds. If two readers race, one wins and the other gets a 404 — acceptable behavior, documented in the product.</p>
+
+    <h3>Password-protected pastes</h3>
+    <p>The password hash (bcrypt, cost factor 12) is stored in the Cassandra row. On read, the client submits the passphrase in a POST body (never in the URL — URLs end up in logs). The read service bcrypt-compares and returns 401 on mismatch. Password-protected pastes are excluded from CDN and Redis caching (served from origin only). Pre-signed S3 URLs are not used for password-protected pastes — the bytes must not be directly reachable without auth.</p>
+
+    <h3>Syntax highlighting</h3>
+    <p>Done entirely client-side using a library (Prism.js or highlight.js loaded from CDN). The server stores <code>language</code> as a metadata field; the client uses it to trigger the right grammar. This keeps the read path simple and stateless — no server-side rendering, no compute for highlighting. The trade-off is that curl-ing a paste returns raw text, which is almost always what developers want anyway.</p>
+
+    <h3>Forking a paste</h3>
+    <p>Fork = create a new paste with the same content but a new ID and new owner. The write service copies content from the original: for inline pastes, reads the blob from the parent row and writes it inline in the new row; for S3 pastes, issues an S3 server-side copy (no data moves across the network — S3 handles it internally, billing at copy cost not data transfer). The fork then proceeds as a normal write. This is cheap and correct.</p>
+
+    <!-- ======================== vi. Bottlenecks by Tier ======================== -->
+    <h2 class="section-h2"><span class="section-num">vi.</span> Bottlenecks by Tier</h2>
+
+    <table>
+      <thead>
+        <tr><th>Tier</th><th>Practical ceiling</th><th>Binding resource</th><th>Lift</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CDN</td><td>Vendor-defined; effectively unlimited for reasonable traffic</td><td>Egress cost / contract limit</td><td>Increase edge PoP coverage; negotiate egress pricing; use Anycast correctly so traffic is routed to closest PoP</td></tr>
+        <tr><td>Read service (app pods)</td><td>~2,000 concurrent S3 requests / pod (Go goroutine limit before connection pool starvation)</td><td>S3 connection pool exhaustion; open file descriptors</td><td>Increase pod count; tune S3 connection pool size; use HTTP/2 multiplexing to S3</td></tr>
+        <tr><td>Redis</td><td>~100K ops/sec/node; ~26 GB memory/node before eviction pressure</td><td>Memory (metadata + inline content fills fast)</td><td>Shard more aggressively; cache only metadata for large pastes (not the bytes); tune <code>maxmemory-policy</code> to <code>volatile-lru</code> so expiring pastes evict first</td></tr>
+        <tr><td>Cassandra (reads)</td><td>~20K reads/sec per node with LOCAL_ONE consistency; drops to ~8K at LOCAL_QUORUM</td><td>CPU for deserialization; SSTable read IOPS</td><td>Add read replicas; serve reads at LOCAL_ONE (we accept stale by seconds, not minutes); tune bloom filter FP rate to reduce disk seeks</td></tr>
+        <tr><td>Cassandra (writes)</td><td>~20K writes/sec per node (Cassandra is write-optimized via LSM)</td><td>Compaction I/O stealing from reads at high write QPS</td><td>Use LeveledCompactionStrategy (LCS) which trades more compaction CPU for fewer SSTables and more predictable read latency; add nodes horizontally</td></tr>
+        <tr><td>S3 (GETs)</td><td>~5,500 GET requests/sec/prefix by default; higher with prefix sharding</td><td>Request rate per prefix (S3 internal partitioning)</td><td>Distribute content_keys across multiple prefixes (e.g., first 2 chars of paste_id as prefix: <code>aB/aB3kZ9m</code>); S3 auto-scales within a prefix after ~30 min of sustained traffic</td></tr>
+        <tr><td>S3 (PUTs)</td><td>~3,500 PUT requests/sec/prefix</td><td>Same prefix partitioning</td><td>Same prefix sharding strategy; use multipart upload for pastes &gt; 5 MB</td></tr>
+        <tr><td>Expiry worker</td><td>~1,000 deletes/sec sustained</td><td>S3 DELETE throughput + Cassandra write IOPS</td><td>Parallelize worker threads; use S3 batch operations for bulk deletes (up to 1,000 objects per request)</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ======================== vii. Hot Keys / Skew / Pathological Data ======================== -->
+    <h2 class="section-h2"><span class="section-num">vii.</span> Hot Keys / Skew / Pathological Data</h2>
+
+    <p>The skew profile here is more extreme than in the URL shortener. A paste shared in a viral tweet or a Hacker News "Show HN" comment can go from 0 to 50,000 reads in 60 seconds. The paste ID becomes a hot key across every tier simultaneously: CDN, Redis, S3, and Cassandra all see it at once.</p>
+
+    <h3>Mitigations</h3>
+    <ul>
+      <li><strong>CDN as the first wall:</strong> Public pastes are aggressively cached at the CDN edge. A viral paste that reaches CDN cache serves infinitely without touching origin. Set <code>Cache-Control: public, max-age=3600, stale-while-revalidate=60</code> on public permanent pastes. The stale-while-revalidate window means the CDN serves from cache while asynchronously refreshing, so origin never sees thundering herd on TTL expiry.</li>
+      <li><strong>In-process LRU as the second wall:</strong> Each app pod maintains an LRU of the last 1,000 paste responses in memory (~10 MB at 10 KB average). A pod that has already seen this paste serves subsequent requests without touching Redis or S3.</li>
+      <li><strong>Pre-signed S3 URLs redirect clients directly to S3:</strong> For large pastes, the app returns a 307 redirect to a pre-signed S3 URL. Bandwidth shifts from app pods + Redis to S3 directly, distributing the load across S3's own CDN. This is the key architectural advantage of object storage for large content.</li>
+      <li><strong>Hot-paste detection and adaptive caching:</strong> A background counter (probabilistic sampling via reservoir sampling at 1%) identifies paste IDs with &gt;1,000 requests/minute. These are flagged for: (a) extended CDN TTL via purge-and-rewrite, (b) promotion to in-process L1 on all pods via a lightweight pub-sub event, (c) S3 pre-signed URL caching in Redis for maximum duration. Detection latency is ~60 seconds — short enough to catch viral spikes before they saturate the origin.</li>
+    </ul>
+
+    <aside class="callout callout-warn">
+      <strong>Asymmetric risk —</strong> A single paste from a public figure, a leaked credential dump, or a viral code snippet can saturate a Redis shard in seconds. The mitigation hierarchy must be in place <em>before</em> the event. You will not have time to react after the HN post hits the front page.
+    </aside>
+
+    <!-- ======================== viii. Multi-Region Architecture ======================== -->
+    <h2 class="section-h2"><span class="section-num">viii.</span> Multi-Region Architecture</h2>
+
+    <h3>Routing layer</h3>
+    <p>Anycast geo-DNS routes readers to the nearest region. Pastebin reads are entirely region-local: the CDN serves from edge; cache misses hit the regional read service and regional Cassandra replica. No cross-region hop on the read path.</p>
+
+    <p>Writes are slightly different. Anonymous pastes are created in the nearest region. Authenticated user pastes are created in the user's "home region" (determined at account creation) to simplify the <code>pastes_by_owner</code> lookup. If a user in Singapore creates an account, their pastes live in the AP region's Cassandra. Reads from the US get a cross-region hop for cache misses — acceptable for a write-once-read-many workload where the vast majority of reads are already CDN hits.</p>
+
+    <h3>What is region-local vs. globally coordinated</h3>
+    <table>
+      <thead>
+        <tr><th>Concern</th><th>Region-local</th><th>Globally coordinated</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Paste content reads</td><td>Yes — CDN edge or regional read service</td><td>No</td></tr>
+        <tr><td>Paste content bytes (S3)</td><td>Cross-region replication via S3 CRR; reads serve from nearest region bucket</td><td>Write lands in origin region; replication async</td></tr>
+        <tr><td>Metadata (Cassandra)</td><td>Regional RF=3 cluster with async cross-region replication</td><td>Custom alias creation uses LWT in home region</td></tr>
+        <tr><td>Custom alias uniqueness</td><td>No — must be globally unique</td><td>Yes — LWT in a designated "alias arbiter" region; rare operation, latency acceptable</td></tr>
+        <tr><td>View count</td><td>Incremented regionally</td><td>Aggregated asynchronously into a global counter; eventual consistency is fine for view counts</td></tr>
+        <tr><td>Burn-after-read</td><td>Attempted in originating region</td><td>Cross-region invalidation (CDN purge is global by default)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>RPO / RTO matrix</h3>
+    <table>
+      <thead>
+        <tr><th>Failure scope</th><th>Impact</th><th>RPO</th><th>RTO</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Single AZ down (within region)</td><td>Reduced capacity; Cassandra RF=3 survives 1 AZ loss</td><td>0 (no data loss)</td><td>&lt; 30s (LB removes unhealthy pods)</td></tr>
+        <tr><td>Full region down</td><td>Traffic re-routed to nearest healthy region via geo-DNS TTL</td><td>&lt; 5 min for async-replicated content</td><td>~2–5 min (geo-DNS TTL)</td></tr>
+        <tr><td>S3 region outage</td><td>Cache miss reads fail; S3 CRR allows failover to replica bucket</td><td>~15 min replication lag (typical CRR lag)</td><td>&lt; 10 min (update endpoint to replica bucket)</td></tr>
+        <tr><td>Metadata DB corruption (logical)</td><td>Paste metadata unreadable</td><td>Point-in-time Cassandra snapshots every 6h; max 6h data loss</td><td>Hours — Cassandra restore is slow; prioritize replaying write-ahead log</td></tr>
+        <tr><td>Expiry worker outage</td><td>Expired pastes remain readable until read-time check catches them; no data integrity loss</td><td>0 (read-time enforcement still works)</td><td>Worker restarts automatically; backlog processed within hours</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ======================== ix. Failure Modes & Mitigations ======================== -->
+    <h2 class="section-h2"><span class="section-num">ix.</span> Failure Modes &amp; Mitigations</h2>
+
+    <h3>Infrastructure failures</h3>
+    <table>
+      <thead>
+        <tr><th>Failure</th><th>Blast radius / symptom</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>App pod crash</td><td>In-flight requests fail; LB health-check removes pod within 5s</td><td>Minimum 3 pods per region; LB health-check at 2s interval; circuit breaker in LB</td></tr>
+        <tr><td>Redis shard down</td><td>Cache misses for that shard's key space; latency spikes as requests fall through to S3/DB</td><td>Read service degrades gracefully to DB+S3; Redis cluster auto-promotes replica in &lt; 30s; size DB tier to absorb full load</td></tr>
+        <tr><td>Redis cluster full (OOM)</td><td>Evictions begin; hit rate drops; DB and S3 absorb the load increase</td><td><code>volatile-lru</code> eviction policy targets expiring keys first; alert at 75% memory used; add shard before hitting 90%</td></tr>
+        <tr><td>Cassandra node down</td><td>RF=3 with LOCAL_QUORUM writes: 1 node loss is transparent; 2 node loss: writes fail (quorum unavailable)</td><td>3-node minimum per region; RF=3; alert on node down immediately; replace within 4h (SLA)</td></tr>
+        <tr><td>S3 throttling (503 Slow Down)</td><td>Large paste reads and writes fail; app retries with exponential backoff + jitter</td><td>Prefix sharding to spread request rate; retry with jitter (1s base, 2× up to 30s, 3 attempts); circuit breaker after 5 consecutive failures</td></tr>
+        <tr><td>S3 region outage</td><td>Cache misses can't resolve for large pastes</td><td>S3 Cross-Region Replication (CRR); update read service endpoint to replica bucket via config flag; test failover quarterly</td></tr>
+        <tr><td>CDN PoP outage</td><td>Traffic falls through to origin; origin must handle full CDN-bypass load</td><td>Multi-CDN via geo-DNS health checks (Fastly + CloudFront failover); size origin for CDN-down case</td></tr>
+        <tr><td>Region-wide outage</td><td>All traffic for that region must reroute</td><td>Geo-DNS with low TTL (60s); cross-region Cassandra replication; S3 CRR; runbook for failover activation</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Data-path pathologies</h3>
+    <table>
+      <thead>
+        <tr><th>Failure</th><th>Blast radius / symptom</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cache stampede (viral paste)</td><td>CDN TTL expires on popular paste; thousands of simultaneous cache misses hit origin</td><td><code>stale-while-revalidate</code> at CDN; singleflight in-process; distributed mutex at Redis; adaptive CDN TTL extension for hot keys</td></tr>
+        <tr><td>Hot key on Redis shard</td><td>Single shard CPU-bound; latency for all keys on that shard degrades</td><td>In-process L1 LRU absorbs top-N keys; pre-signed S3 URL redirect bypasses Redis for large pastes; key splitting not needed (paste IDs are globally unique — no synonyms to fan-out)</td></tr>
+        <tr><td>Hot partition on Cassandra</td><td>Node serving that paste_id's partition sees disproportionate read load</td><td>99%+ of reads hit CDN or Redis; Cassandra should almost never see hot-paste traffic directly</td></tr>
+        <tr><td>Replication lag (Cassandra cross-region)</td><td>Reader in EU reads older content than writer in US; typical lag &lt; 500ms</td><td>Acceptable for pastebin; document in SLO as "eventual consistency across regions, &lt;1s typical"; if correctness is critical, write to the reader's region via home-region routing</td></tr>
+        <tr><td>Poison paste (write succeeds, S3 object corrupted)</td><td>Readers get garbled bytes; no silent corruption — S3 returns ETag mismatch on read with integrity checks enabled</td><td>Enable S3 server-side checksum (SHA256); read service validates checksum before serving; serve 500 and alert on mismatch</td></tr>
+        <tr><td>Partial write (DB row written, S3 PUT failed)</td><td>Paste exists in metadata but content is absent; read returns 500 or empty body</td><td>Write service: S3 PUT first, then DB write. If S3 PUT fails, return error — no DB row created. If DB write fails after S3 PUT, a background reconciler finds DB-absent S3 objects and either retries the DB write or deletes the orphaned S3 object.</td></tr>
+        <tr><td>Expiry worker falling behind</td><td>Expired pastes remain in S3 / DB longer than expected; read-time check still enforces correctness</td><td>Monitor expiry queue depth; auto-scale worker pods on queue depth; S3 lifecycle rules as backstop</td></tr>
+        <tr><td>Clock skew between nodes</td><td><code>expires_at</code> enforcement inconsistent across nodes; a paste may be readable on one pod and expired on another</td><td>Use NTP with &lt;100ms tolerance; treat <code>expires_at</code> as a soft boundary with 5s grace on the read side; burn-after-read uses Cassandra LWT (Paxos) not wall clock</td></tr>
+        <tr><td>Cassandra compaction storm</td><td>Sustained high write QPS triggers compaction; read latency spikes as compaction steals I/O</td><td>LeveledCompactionStrategy minimizes read amplification; throttle compaction throughput via <code>compaction_throughput_mb_per_sec</code>; add nodes to spread compaction load</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Operational / deployment failures</h3>
+    <table>
+      <thead>
+        <tr><th>Failure</th><th>Blast radius / symptom</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Bad deploy (read service)</td><td>New pods return 5xx on paste fetch</td><td>Canary deploy at 5% traffic; auto-rollback on error rate &gt; 1% sustained 2 min; blue-green for schema-breaking changes</td></tr>
+        <tr><td>Cassandra schema migration</td><td>Adding a column is safe (Cassandra handles it); renaming or changing type is not</td><td>Always additive: new column alongside old; dual-write during migration; remove old column only after all readers on new schema; never rename in place</td></tr>
+        <tr><td>S3 bucket misconfiguration (public access)</td><td>All paste content publicly readable without auth</td><td>Block public access at bucket level; all access via pre-signed URLs or app-layer auth; quarterly S3 policy audit; AWS Macie for sensitive data detection</td></tr>
+        <tr><td>Expiry worker runaway (deletes live pastes)</td><td>Active pastes deleted prematurely</td><td>Worker reads expiry only from <code>pastes_by_expiry</code>; cross-checks <code>expires_at</code> in main table before deleting; 5-second delay between DB read and S3 delete as a sanity window</td></tr>
+        <tr><td>ID generator pod restart mid-range</td><td>Unused IDs in the claimed range are wasted — not a correctness problem, but a small key space leak</td><td>Ranges are 1M IDs; losing a partial range wastes at most ~1M IDs out of 3.5T — negligible; log range claim/return at pod startup/shutdown for audit</td></tr>
+      </tbody>
+    </table>
+
+    <aside class="callout callout-note">
+      <strong>Principle —</strong> Cache is an optimization, never a dependency. The read service must be able to serve every paste cold — from DB + S3 — without Redis. Size the DB and S3 connection pools to absorb the full read QPS. Never architect a path where a Redis outage means a read outage.
+    </aside>
+
+    <!-- ======================== x. Security & Abuse ======================== -->
+    <h2 class="section-h2"><span class="section-num">x.</span> Security &amp; Abuse</h2>
+
+    <h3>Threat model</h3>
+    <table>
+      <thead>
+        <tr><th>Attack vector</th><th>Risk</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Malware / phishing content hosting</td><td>High — short URLs and anonymous pastes are ideal phishing vehicles</td><td>Async content scan at write time (ClamAV for binaries; heuristic URL scanner for embedded links); Google Safe Browsing API check on URLs in paste content; flag for human review above a suspicion threshold; don't block writes synchronously — scan in background and tombstone within seconds of a positive hit</td></tr>
+        <tr><td>CSAM / illegal content</td><td>Critical — legal liability; platform must not host</td><td>PhotoDNA hash check for image content (text pastes: keyword signal + human review pipeline); hard delete within 60s of detection; preserve evidence hash for law enforcement in append-only audit log; legal hold prevents S3 lifecycle deletion</td></tr>
+        <tr><td>ID enumeration</td><td>Medium — attacker iterates IDs to harvest private pastes</td><td>IDs are base62 7-char (3.5T space); rate-limit 404s aggressively (10 per minute per IP / token); use non-sequential ID generation (shuffle counter range before encoding) to make sequential enumeration worthless; private pastes still require knowing the ID — obscurity is not security, but it raises the cost of enumeration significantly</td></tr>
+        <tr><td>Credential / secret dumping</td><td>High — pastes are a common accidental leak surface for API keys, passwords, private keys</td><td>Regex scan on write for known secret patterns (AWS keys, GitHub tokens, private key headers); flag and notify owner if authenticated; for anonymous pastes, tombstone and alert security team; integrate with GitHub secret scanning partner program</td></tr>
+        <tr><td>DDoS on write endpoint</td><td>Medium — 350 QPS peak write is modest; DDoS can overwhelm it easily</td><td>Rate-limit writes per IP (10/min anonymous, 100/min authenticated); CAPTCHA at write for anonymous users on abuse signals; Cloudflare / Akamai DDoS protection at edge; WAF rule for request size &gt; 10 MB</td></tr>
+        <tr><td>DDoS on single paste (read amplification)</td><td>High — attacker shares URL broadly; origin gets slammed</td><td>CDN absorbs read DDoS for public pastes; rate-limit reads per IP at edge (1,000/min); auto-block IP on anomalous read rate; for private pastes behind auth, the auth wall is the rate limit</td></tr>
+        <tr><td>Redirect loop / open redirect via paste content</td><td>Low — pastebin doesn't redirect on content; content is served raw</td><td>N/A — no redirect functionality for content; only the short URL → paste page is a redirect, which is the intended behavior</td></tr>
+        <tr><td>GDPR / right to erasure</td><td>Medium — EU users can request deletion of their content</td><td>Deletion pipeline: tombstone DB row within 30s, S3 delete within 5 min (sync), CDN purge within 5 min; audit log records deletion event but not content; document data residency (content stored in which regions) in privacy policy</td></tr>
+        <tr><td>Audit / forensics</td><td>Regulatory — law enforcement requests for content</td><td>Append-only audit log (CloudWatch Logs + S3 + WORM bucket policy) records: create event, read events (sampled), delete events, abuse flags, legal holds; content itself is in S3 which has object-level versioning; legal hold flag in DB prevents expiry worker from deleting; legal team owns key for WORM bucket</td></tr>
+        <tr><td>Password brute-force</td><td>Medium — password-protected pastes are individually targetable</td><td>Rate-limit wrong password attempts: 5 per paste_id per 15 minutes per IP; after 3 failures, serve a CAPTCHA; bcrypt cost factor 12 (300ms on server) makes brute force expensive; lock paste_id after 10 failures from different IPs</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Takedown propagation flow</h3>
+    <p>Detection → flag in DB (<code>status = 'tombstoned'</code>) → read service serves 451 (legal / abuse takedown) → purge CDN edge cache via API (propagates to all PoPs in &lt; 10 seconds) → delete Redis cache → S3 delete or legal hold (depending on reason) → audit log entry. Total time from detection to edge cache cleared: &lt; 60 seconds.</p>
+
+    <!-- ======================== xi. Observability & SLOs ======================== -->
+    <h2 class="section-h2"><span class="section-num">xi.</span> Observability &amp; SLOs</h2>
+
+    <h3>SLI targets (28-day rolling window)</h3>
+    <table>
+      <thead>
+        <tr><th>SLI</th><th>Target</th><th>Error budget / month</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Paste read availability (HTTP 2xx/3xx ratio, excluding 404/410)</td><td>99.99%</td><td>~4.3 minutes</td></tr>
+        <tr><td>Read p50 latency (time-to-first-byte, server-side, post-CDN)</td><td>&lt; 20 ms</td><td>—</td></tr>
+        <tr><td>Read p99 latency (TTFB, server-side)</td><td>&lt; 50 ms</td><td>—</td></tr>
+        <tr><td>Read p99.9 latency (TTFB)</td><td>&lt; 200 ms</td><td>—</td></tr>
+        <tr><td>Paste write availability</td><td>99.9%</td><td>~43 minutes — writes are less critical than reads</td></tr>
+        <tr><td>Write p99 latency (create paste, end-to-end)</td><td>&lt; 500 ms</td><td>— (includes S3 PUT; 95th pct &lt; 200ms)</td></tr>
+        <tr><td>Expiry correctness (expired paste serves 404 within 5s of TTL)</td><td>99.9%</td><td>Read-time check is the enforcement; 0.1% failure budget for clock skew edge cases</td></tr>
+        <tr><td>Content durability</td><td>99.999999999% (S3 eleven-nines)</td><td>Inherited from S3; Cassandra RF=3 provides independent metadata durability</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Golden signals — per service</h3>
+    <ul>
+      <li><strong>Traffic:</strong> RPS at each tier (CDN, read service, Redis, Cassandra, S3); break out by HTTP status and by content_type (inline vs. S3 pastes)</li>
+      <li><strong>Errors:</strong> 5xx rate (reliability metric); 404 rate (product metric — indicates abuse/enumeration if spike); 451 rate (abuse takedown metric)</li>
+      <li><strong>Latency:</strong> TTFB at CDN edge (p50, p99); TTFB at read service (p50, p99, p99.9); S3 GET latency (p99 — this is the tail that controls large-paste p99); Redis GET latency</li>
+      <li><strong>Saturation:</strong> Redis memory used %; Cassandra pending compactions; S3 throttle errors (503 Slow Down rate); app pod CPU and open connection count</li>
+    </ul>
+
+    <h3>Key alerts (burn-rate rules)</h3>
+    <ul>
+      <li>Page: read availability burn rate &gt; 2% of monthly budget in 1 hour (indicates ~14 minutes of downtime burning in 60 min)</li>
+      <li>Page: read p99 TTFB &gt; 200 ms for 5 consecutive minutes (SLO miss territory)</li>
+      <li>Page: Cassandra node down (RF=3 means one more failure away from quorum loss)</li>
+      <li>Page: S3 error rate &gt; 1% sustained 5 minutes (affects all large-paste reads)</li>
+      <li>Ticket: Redis memory &gt; 75% on any shard</li>
+      <li>Ticket: any single paste_id &gt; 500 QPS (hot key candidate — engage adaptive caching playbook)</li>
+      <li>Ticket: expiry worker queue depth &gt; 24 hours of backlog (worker falling behind)</li>
+      <li>Ticket: write latency p99 &gt; 1s sustained (S3 PUT or DB write degradation)</li>
+    </ul>
+
+    <h3>Tracing &amp; debugging</h3>
+    <ul>
+      <li><strong>Trace ID</strong> propagated through CDN (via response header) → LB → read service → Redis → Cassandra → S3. A slow paste read can be unwound to the exact tier that added the latency.</li>
+      <li><strong>Sampled tracing:</strong> 1% baseline; 100% for all 5xx, all requests &gt; 200 ms, and all pastes &gt; 1 MB</li>
+      <li><strong>Cache hit/miss as span attributes:</strong> <code>cache.l1_hit</code>, <code>cache.redis_hit</code>, <code>cache.s3_fetch</code> — the trace shows exactly which tiers fired</li>
+      <li><strong>S3 request ID in trace:</strong> every S3 GET/PUT includes AWS request ID as a span attribute; essential for opening S3 support tickets against a specific failed request</li>
+    </ul>
+
+    <!-- ======================== xii. Key Takeaways ======================== -->
+    <h2 class="section-h2"><span class="section-num">xii.</span> Key Takeaways</h2>
+
+    <div class="pull-quote">The moment the payload outgrows the row, object storage becomes the architecture.</div>
+
+    <ol>
+      <li><strong>Split metadata from content.</strong> Metadata (IDs, expiry, owner, size) belongs in a fast, indexed database. Content bytes belong in object storage. Mixing them — putting 10 MB blobs in Cassandra rows — collapses both tiers simultaneously under load.</li>
+      <li><strong>The inline threshold is a first-class decision.</strong> Storing small pastes (&lt;4 KB) inline in the DB row eliminates an entire network hop for the majority of pastes. Tune this threshold based on observed size distribution, DB row limits, and S3 GET latency. It is a config value, not hard code.</li>
+      <li><strong>Write order matters for consistency.</strong> S3 PUT before DB write. A failed S3 PUT leaves no trace — the paste simply doesn't exist. A DB write before a failed S3 PUT leaves a dangling metadata row with no content, which is harder to clean up and confusing to read-path code.</li>
+      <li><strong>Expiry is a pipeline, not a flag.</strong> Read-time enforcement is the correctness guarantee. The async worker is the storage reclamation mechanism. S3 lifecycle rules are the backstop. All three must exist; each compensates for the others' failure modes.</li>
+      <li><strong>Pre-signed S3 URLs are the bandwidth escape hatch.</strong> For large pastes, redirect the client directly to S3. The app tier serves a 307 — not bytes. This keeps app pods stateless and thin, offloads bandwidth entirely to S3's own infrastructure, and is free to implement.</li>
+      <li><strong>Object storage has throughput ceilings per prefix.</strong> S3 allows ~3,500 PUT/s and ~5,500 GET/s per prefix. At low QPS this is invisible. At scale, prefix sharding (first 2 chars of the key) multiplies this ceiling by the number of prefixes. Design it in early — retrofitting prefix sharding onto an existing key scheme is painful.</li>
+      <li><strong>Burn-after-read is eventually consistent by design.</strong> A race between two simultaneous readers means one gets the content and one gets a 404. Document this, set user expectations, and don't try to make it atomic with distributed locking — the cure is worse than the disease.</li>
+      <li><strong>Abuse is load-bearing, not optional.</strong> Pastebin is one of the most abused infrastructure primitives on the internet. The content scanning pipeline, rate limiting, and takedown flow must be built before launch, not after the first incident.</li>
+      <li><strong>The read path is shaped by bytes, not requests.</strong> 3,500 QPS sounds modest until you multiply by 10 KB average and realize you need ~280 Mbps sustained at peak — without CDN. Architecture everything around the byte rate, not the request rate. CDN is not optional; it is load-bearing infrastructure.</li>
+      <li><strong>Observability at the content_type boundary.</strong> Split all metrics by whether the paste is inline or S3. A latency regression that affects only S3 pastes (large content) looks like a p99 spike but leaves p50 fine — you will miss it without the split. This is the trace attribute that pays for itself on the first incident.</li>
+    </ol>
+
+    <!-- ======================== xiii. Go Deeper ======================== -->
+    <h2 class="section-h2"><span class="section-num">xiii.</span> Go Deeper</h2>
+
+    <ul>
+      <li>How would you implement real-time collaborative editing (Google Docs–style) on top of this architecture? What changes first — the storage model, the protocol, or the consistency model?</li>
+      <li>Design the content abuse pipeline end-to-end: ingestion → async scan → result routing → takedown → appeal. What's your false positive handling? How do you prevent legitimate pastes from being tombstoned?</li>
+      <li>Pastebin pastes can embed URLs (phishing). Design a URL scanner that processes pastes without adding latency to the write path. How do you handle pastes with 1,000 embedded links?</li>
+      <li>How would you implement a "paste diff" feature — showing the differences between two paste versions — at scale? Where does the diff computation happen, and how do you cache it?</li>
+      <li>The expiry worker processes 10M pastes/day at peak. How would you design it to survive a 3-day worker outage and then catch up without overloading Cassandra or S3 on recovery?</li>
+      <li>A user claims GDPR right-to-erasure. Their account has 50,000 pastes. Design the deletion pipeline. What's the SLA? What do you do with pastes that have been forked by other users?</li>
+      <li>How would you implement paste encryption at rest (client-side, not server-side) so that even the platform cannot read paste content? What does this do to abuse detection?</li>
+    </ul>
+
+    <!-- Ornament + prev/next -->
+    <div class="ornament-divider" style="margin-top:64px;">
+      <span class="line"></span>
+      <span class="dot">❦</span>
+      <span class="line"></span>
+    </div>
+
+    <nav class="prev-next">
+      <a class="pn-prev" href="url-shortener.html">
+        <span class="pn-label">← Previous</span>
+        <span class="pn-title">URL Shortener</span>
+      </a>
+      <a class="pn-next" href="../_topic-roadmap.html">
+        <span class="pn-label">Next issue →</span>
+        <span class="pn-title">Instagram</span>
+      </a>
+    </nav>
+
+  </article>
+
+  <!-- ====================== FOOTER ====================== -->
+  <footer>
+    <div class="footer-row">
+      <div class="footer-mark">
+        Hand-written, hand-pulled. <span class="accent">— filter coffee way</span>
+      </div>
+      <div class="footer-meta">
+        © 2026 · made for understanding
+        <a href="../about.html">About Filter Coffee</a>
+        <a href="../_topic-roadmap.html">Roadmap</a>
+        <a href="../templates/design-template.html">Template</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
