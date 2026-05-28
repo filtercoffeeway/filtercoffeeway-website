@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What is Filter Coffee? — Filter Coffee Way</title>
+  <link rel="icon" href="assets/favicon.ico" />
+  <meta name="description" content="South Indian filter coffee — the steel percolator, the chicory decoction, the dabara-tumbler, the froth. The drink behind the name." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <style>
+    /* -------------------------------------------------------------
+       Filter Coffee Way — About: What is Filter Coffee?
+       ------------------------------------------------------------- */
+
+    :root {
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
+      --rule-2:      #d6c5a4;
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
+      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+
+      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, "Times New Roman", serif;
+      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body {
+      font-family: var(--sans);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 16px;
+      background-image:
+        radial-gradient(rgba(168, 90, 42, 0.035) 1px, transparent 1px),
+        radial-gradient(rgba(43, 29, 18, 0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 37px 37px;
+      background-position: 0 0, 11px 13px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--ink); }
+
+    /* ---------- Container ---------- */
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+
+    /* ---------- Masthead ---------- */
+    .masthead {
+      padding: 22px 0 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .masthead-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
+    .wordmark-sub {
+      display: block;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-top: 4px;
+    }
+    .masthead nav {
+      display: flex; gap: 26px; flex-wrap: wrap;
+      font-size: 13px; font-weight: 500;
+    }
+    .masthead nav a {
+      color: var(--ink-2);
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color .15s, border-color .15s;
+    }
+    .masthead nav a:hover,
+    .masthead nav a.active { color: var(--ink); border-bottom-color: var(--accent); }
+
+    .issue-strip {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0 0;
+      font-family: var(--sans);
+      font-size: 10.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .issue-strip .dot { color: var(--accent); }
+
+    /* ---------- Page hero ---------- */
+    .page-hero {
+      padding: 72px 0 64px;
+      border-bottom: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+    .kicker {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .kicker::before {
+      content: ""; width: 28px; height: 1px; background: var(--accent);
+    }
+    .page-hero h1 {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: clamp(44px, 6vw, 76px);
+      line-height: 0.98;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+    .page-hero h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+    .page-hero .dek {
+      font-family: var(--serif);
+      font-weight: 300;
+      font-size: 20px;
+      line-height: 1.45;
+      color: var(--ink-2);
+      max-width: 42ch;
+    }
+
+    /* ---------- Quick facts card ---------- */
+    .facts-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 28px 30px;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .facts-card::before {
+      content: "AT A GLANCE";
+      position: absolute;
+      top: -9px; left: 22px;
+      background: var(--paper);
+      padding: 0 10px;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .fact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px dashed var(--rule);
+      font-size: 13.5px;
+    }
+    .fact-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .fact-row:first-child { padding-top: 4px; }
+    .fact-label {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      flex-shrink: 0;
+      padding-top: 2px;
+      min-width: 100px;
+    }
+    .fact-value {
+      font-family: var(--serif);
+      font-size: 14.5px;
+      color: var(--ink);
+      line-height: 1.4;
+      text-align: right;
+    }
+
+    /* ---------- Editorial body ---------- */
+    .article-body {
+      display: grid;
+      grid-template-columns: 680px 1fr;
+      gap: 64px;
+      padding: 72px 0;
+    }
+    .prose { max-width: 680px; }
+    .prose p {
+      font-family: var(--serif);
+      font-size: 19px;
+      line-height: 1.7;
+      color: var(--ink-2);
+      margin-bottom: 28px;
+    }
+    .prose p:last-child { margin-bottom: 0; }
+    .prose strong {
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .prose em {
+      font-style: italic;
+      color: var(--ink);
+    }
+
+    /* Drop cap */
+    .prose p.drop-cap::first-letter {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 72px;
+      float: left;
+      line-height: 0.82;
+      padding: 8px 12px 0 0;
+      color: var(--accent);
+    }
+
+    /* Section heading inside prose */
+    .prose-heading {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 26px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin-top: 52px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .prose-heading::before {
+      content: "";
+      display: block;
+      width: 4px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Pull quote */
+    .pull-quote {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 22px;
+      line-height: 1.45;
+      color: var(--ink);
+      border-left: 3px solid var(--accent);
+      padding: 4px 0 4px 24px;
+      margin: 40px 0;
+    }
+
+    /* ---------- Sidebar (sticky annotations) ---------- */
+    .sidebar {
+      padding-top: 8px;
+    }
+    .sidebar-note {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 20px 22px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: var(--ink-2);
+      line-height: 1.6;
+      position: relative;
+    }
+    .sidebar-note .note-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .sidebar-note strong { color: var(--ink); }
+    .sidebar-note em { font-style: italic; }
+
+    /* ---------- The process strip ---------- */
+    .process-strip {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 40px 44px;
+      margin: 0 0 72px;
+      position: relative;
+    }
+    .process-strip::before {
+      content: "HOW IT'S MADE";
+      position: absolute;
+      top: -9px; left: 28px;
+      background: var(--paper);
+      padding: 0 10px;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      position: relative;
+    }
+    .process-steps::before {
+      content: "";
+      position: absolute;
+      top: 28px;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: var(--rule-2);
+      z-index: 0;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .step-num {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--paper);
+      border: 2px solid var(--rule-2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--ink);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .step-desc {
+      font-size: 12.5px;
+      color: var(--ink-2);
+      line-height: 1.5;
+    }
+
+    /* ---------- Closing CTA ---------- */
+    .closing {
+      padding: 64px 0 80px;
+      border-top: 1px solid var(--rule);
+      text-align: center;
+    }
+    .closing h2 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 34px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .closing p {
+      font-family: var(--serif);
+      font-weight: 300;
+      font-size: 18px;
+      color: var(--ink-2);
+      max-width: 48ch;
+      margin: 0 auto 32px;
+      line-height: 1.55;
+    }
+    .cta {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--sans);
+      font-size: 14px; font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+      padding: 12px 0;
+      border-bottom: 2px solid var(--accent);
+    }
+    .cta:hover { color: var(--accent); }
+    .cta .arrow { transition: transform .2s; }
+    .cta:hover .arrow { transform: translateX(4px); }
+    .cta-gap { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+    .cta-secondary {
+      border-bottom-color: var(--rule-2);
+      color: var(--ink-2);
+    }
+    .cta-secondary:hover { color: var(--ink); border-bottom-color: var(--ink-3); }
+
+    /* ---------- Ornament ---------- */
+    .ornament-divider {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px;
+      padding: 8px 0;
+      color: var(--accent);
+    }
+    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
+    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
+
+    /* ---------- Footer ---------- */
+    footer {
+      padding: 56px 0 80px;
+      border-top: 1px solid var(--rule);
+      margin-top: 0;
+    }
+    .footer-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-mark {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--ink-2);
+    }
+    .footer-mark .accent { color: var(--accent); }
+    .footer-meta {
+      font-size: 12px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+    }
+    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
+    .footer-meta a:hover { color: var(--accent); }
+
+    /* ---------- Divider rule ---------- */
+    .section-rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 0;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .page-hero { grid-template-columns: 1fr; gap: 36px; padding: 44px 0 56px; }
+      .article-body { grid-template-columns: 1fr; gap: 36px; padding: 52px 0; }
+      .prose { max-width: 100%; }
+      .process-steps { grid-template-columns: 1fr 1fr; gap: 28px; }
+      .process-steps::before { display: none; }
+      .masthead-row { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 600px) {
+      .process-steps { grid-template-columns: 1fr; }
+      .page-hero h1 { font-size: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ====================== MASTHEAD ====================== -->
+  <header class="masthead">
+    <div class="masthead-row">
+      <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:14px;">
+        <img src="assets/logo.svg" alt="Filter Coffee Way" width="36" height="36" style="border-radius:8px; flex-shrink:0;" />
+        <div>
+          <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
+          <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
+        </div>
+      </a>
+      <nav>
+        <a href="about.html" class="active">About</a>
+        <a href="index.html#blog">Blog</a>
+        <a href="index.html#designs">System Design</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    <div class="issue-strip">
+      <span>filtercoffeeway.com &nbsp;·&nbsp; Vol. I</span>
+      <span>San Francisco</span>
+    </div>
+  </header>
+
+  <!-- ====================== PAGE HERO ====================== -->
+  <section class="page-hero">
+    <div>
+      <span class="kicker">The drink behind the name</span>
+      <h1>What is<br><em>filter coffee?</em></h1>
+      <p class="dek">A steel percolator. A morning ritual. A decoction dripped slow, mixed with hot milk, poured back and forth until the froth rises. It is not a flavour. It is a way of doing things.</p>
+    </div>
+
+    <div class="facts-card">
+      <div class="fact-row">
+        <span class="fact-label">Also called</span>
+        <span class="fact-value">Kaapi, Degree Coffee, Madras Coffee</span>
+      </div>
+      <div class="fact-row">
+        <span class="fact-label">Origin</span>
+        <span class="fact-value">South India — Tamil Nadu &amp; Karnataka</span>
+      </div>
+      <div class="fact-row">
+        <span class="fact-label">Blend</span>
+        <span class="fact-value">Coffee + chicory (roughly 80:20)</span>
+      </div>
+      <div class="fact-row">
+        <span class="fact-label">Brewed in</span>
+        <span class="fact-value">Stainless steel percolator filter</span>
+      </div>
+      <div class="fact-row">
+        <span class="fact-label">Served in</span>
+        <span class="fact-value">Dabara &amp; tumbler (steel)</span>
+      </div>
+      <div class="fact-row">
+        <span class="fact-label">Brewing time</span>
+        <span class="fact-value">10–20 minutes, gravity-fed drip</span>
+      </div>
+      <div class="fact-row">
+        <span class="fact-label">The froth</span>
+        <span class="fact-value">Non-negotiable</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== PROCESS STRIP ====================== -->
+  <div style="padding-top: 64px;">
+    <div class="process-strip">
+      <div class="process-steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-title">Grind the blend</div>
+          <div class="step-desc">Coffee beans and chicory, finely ground — not espresso-fine, not coarse. The ratio is a family secret.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-title">Pack the filter</div>
+          <div class="step-desc">Grounds go into the top chamber of the steel percolator. Pressed lightly with the pressing disc. Not too tight.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-title">Pour &amp; wait</div>
+          <div class="step-desc">Hot water over the grounds. The decoction drips slowly into the lower chamber. Ten to twenty minutes. No hurrying.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-title">Mix with milk</div>
+          <div class="step-desc">Full-fat milk, boiled, poured into the dabara. A measure of dark decoction added. Sugar to taste.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">05</div>
+          <div class="step-title">Pull for froth</div>
+          <div class="step-desc">Poured back and forth between tumbler and dabara — lifted high to cool, to aerate, to froth. The sound is the signature.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== ARTICLE BODY ====================== -->
+  <div class="article-body">
+
+    <div class="prose">
+
+      <p class="drop-cap">Filter coffee is not a style of brewing that happened to become popular in South India. It is the other way around — it grew here, shaped by local ingredients, local vessels, local mornings, and became something you will not find anywhere else in the world with quite the same character.</p>
+
+      <h2 class="prose-heading">The coffee and the chicory</h2>
+
+      <p>Most coffee cultures treat the bean as the whole story. South Indian filter coffee adds chicory — a roasted root that has no caffeine, but contributes a deep, slightly bitter, earthy body that cuts through the milk and holds its flavour even when diluted. A typical blend runs 70–80% coffee to 20–30% chicory, though this varies by region, brand, and household.</p>
+
+      <p>Chicory is not a shortcut or a dilution tactic. It was historically cheaper than coffee, yes, but it has become so integral to the taste profile that a straight-coffee version tastes incomplete to anyone who grew up with the original. The same way a brioche and a sandwich loaf are both bread, but asking for one when you want the other misses something essential.</p>
+
+      <div class="pull-quote">The chicory is not a dilution. It is a design choice that survived because it made the drink better.</div>
+
+      <h2 class="prose-heading">The steel filter</h2>
+
+      <p>The device is a two-piece stainless steel cylinder. The upper chamber has a perforated base — you fill it with grounds, press down with a small disc, pour hot water over it, and wait. Gravity pulls the water through the grounds slowly, dripping into the lower chamber as a thick, almost syrupy decoction.</p>
+
+      <p>There is no pressure. No steam. No pump. The filter works on nothing but patience — it is purely extractive, relying on time and gravity to draw out the flavour. The decoction that collects at the bottom is intensely concentrated, almost espresso-dark, but without espresso's brightness. It has a slower, rounder character.</p>
+
+      <p>The entire device is steel — no paper filters, no plastic. You clean it by hand, reassemble it, and use it again the next morning. In most South Indian households, it has been in the kitchen for decades.</p>
+
+      <h2 class="prose-heading">The dabara and tumbler</h2>
+
+      <p>The serving vessel is as specific as the brewing equipment. A <strong>dabara</strong> is a wide, shallow steel bowl with a rim — the pouring vessel, the hand-holder, the bowl you press against your lower lip when you sip. A <strong>tumbler</strong> is a tall, narrow steel cup — the pouring vessel, the one you lift high when you pull the coffee.</p>
+
+      <p>You do not drink directly from the tumbler alone. The ritual is the pour: decoction and milk mixed in one, then lifted and poured back and forth between the two — tumbler to dabara, dabara back up to tumbler — sometimes from a foot above, sometimes just a few inches. Each pour cools the coffee slightly and folds air into it, building the froth.</p>
+
+      <p>The froth is not decoration. A proper cup of filter coffee has a thin, even foam head. If you serve it without froth, you have served something technically similar but experientially different. The steel conducts heat differently than ceramic — the coffee stays hot longer, and the lip of the dabara is designed to let you sip without burning yourself.</p>
+
+      <h2 class="prose-heading">Where it comes from</h2>
+
+      <p>Coffee reached South India in the 17th century, credited to Baba Budan, a Sufi saint who is said to have smuggled seven beans from Yemen through Chikmagalur in Karnataka. The hills there — still called Baba Budan Giri — remain one of India's primary coffee-growing regions.</p>
+
+      <p>The filter coffee tradition is most associated with Tamil Brahmin households and the Udupi restaurant culture of Tamil Nadu and Karnataka. The <em>Udupi hotel</em> — a no-frills vegetarian South Indian restaurant — was the place you went for <em>tiffin</em> (breakfast) and coffee, and filter coffee was always part of that. Restaurants like Saravana Bhavan, the Indian Coffee House chains, and the old Madras coffee houses became institutions around it.</p>
+
+      <p>"<strong>Degree coffee</strong>" — a term you still hear in Chennai — originally referred to coffee made with milk that had passed a butterfat quality test, using an instrument called a lactometer. The "degree" was a certification of milk purity. Over time it became a synonym for the good stuff.</p>
+
+      <h2 class="prose-heading">The morning it belongs to</h2>
+
+      <p>Filter coffee is inseparable from the South Indian morning. The percolator is set up the night before or at first light. The decoction drips while the household stirs. The sound of the pour — that high, arcing stream between vessels — is the sound of morning more than an alarm clock ever was.</p>
+
+      <p>It is served hot, sweet, and without ceremony — in steel, on a small plate, often alongside <em>idli</em> or <em>dosa</em>. You drink it standing at the kitchen counter or seated on a low stool. It takes about three minutes to finish. In that three minutes it has done everything it was supposed to do.</p>
+
+      <div class="pull-quote">It is slow to brew and quick to drink. The patience is all in the making — not the consuming.</div>
+
+      <h2 class="prose-heading">Why the name</h2>
+
+      <p>The name is not a metaphor borrowed because it sounded interesting. It describes a set of values that already existed and needed a name. Brewing filter coffee demands that you grind fresh each morning rather than opening a jar of powder. It demands that you wait for the decoction rather than adding hot water to instant granules. It demands that you pull the froth with intention rather than just pouring straight from the pan.</p>
+
+      <p>None of these demands are difficult. They are just deliberate. That is the only difference between filter coffee and instant coffee: one requires showing up with attention, every single time. No shortcuts produce the same result. The decoction cannot be rushed. The froth cannot be faked.</p>
+
+      <p>That is the drink. That is the name.</p>
+
+    </div>
+
+    <!-- Sidebar annotations -->
+    <aside class="sidebar">
+      <div class="sidebar-note">
+        <div class="note-label">On chicory</div>
+        Popular brands like <strong>Cothas</strong>, <strong>Leo</strong>, and <strong>Narasu's</strong> each have their own coffee-chicory ratios — choosing a brand is choosing a flavour position. Many South Indian households are fiercely loyal to one.
+      </div>
+
+      <div class="sidebar-note">
+        <div class="note-label">The filter sizes</div>
+        Filters come in sizes numbered 1–5 by how many cups they brew. A size 2 is the standard household filter. A Udupi restaurant runs a size 5 or larger, often with the decoction kept in a large vessel and ladled to order.
+      </div>
+
+      <div class="sidebar-note">
+        <div class="note-label">On the pour</div>
+        The height of the pour is a matter of style and cooling need. A short pour on a very hot day, a longer arc to cool quickly. Expert pourers — usually the person who has made it every morning for thirty years — adjust intuitively.
+      </div>
+
+      <div class="sidebar-note">
+        <div class="note-label">The steel vessel</div>
+        The steel dabara-tumbler conducts heat so efficiently that the coffee stays warm far longer than in ceramic. It also develops a faint metallic note after years of use that regulars consider part of the flavour profile.
+      </div>
+
+      <div class="sidebar-note">
+        <div class="note-label">Degree coffee</div>
+        The lactometer test for milk quality is rarely used today, but <em>degree coffee</em> remains the common term in Chennai street stalls for the best-quality filter coffee — implying it was made with proper milk and proper care.
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ====================== CLOSING ====================== -->
+  <hr class="section-rule" />
+  <div class="closing">
+    <h2>Now you know the coffee.<br>Here is the work.</h2>
+    <p>System design, engineering culture, and long-form writing — all brewed the same way. Slow, deliberate, with attention on the trade-offs.</p>
+    <div class="cta-gap">
+      <a class="cta" href="index.html#designs">
+        Read system designs <span class="arrow">→</span>
+      </a>
+      <a class="cta cta-secondary" href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">
+        Go to the blog <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ====================== FOOTER ====================== -->
+  <footer>
+    <div class="ornament-divider">
+      <span class="line"></span>
+      <span class="dot">❦</span>
+      <span class="line"></span>
+    </div>
+    <div class="footer-row" style="margin-top:24px;">
+      <div class="footer-mark">
+        Brewed in Madras. Served to the world. <span class="accent">— filter coffee way</span>
+      </div>
+      <div class="footer-meta">
+        © 2026 · filtercoffeeway.com
+        <a href="about.html">About</a>
+        <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
+        <a href="_topic-roadmap.html">Roadmap</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
