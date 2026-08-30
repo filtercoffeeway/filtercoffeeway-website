@@ -3,31 +3,109 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SMS Program Policies</title>
+<title>SMS Program — Opt-In, Privacy and Terms</title>
 <style>
   body {
-    max-width: 42rem; margin: 0 auto; padding: 3rem 1.25rem 5rem;
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    max-width: 44rem; margin: 0 auto; padding: 3rem 1.25rem 5rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     color: #1a1d21; background: #fff;
   }
   h1 { font-size: 1.6rem; margin: 0 0 .35rem; }
+  h2 { font-size: 1.05rem; margin: 2.4rem 0 .7rem; }
   .updated { color: #626973; font-size: .85rem; margin: 0 0 2rem; }
-  ul { padding-left: 1.2rem; }
-  li { margin: 0 0 .6rem; }
+  p, li { margin: 0 0 .9rem; }
+  ul, ol { padding-left: 1.2rem; }
+  strong { font-weight: 650; }
   a { color: #1668d6; }
+  .disclosure {
+    border: 2px solid #1668d6; border-radius: 8px;
+    padding: 1.2rem 1.4rem; margin: 1.4rem 0; background: #f6f9fe;
+  }
+  .disclosure p:last-child { margin-bottom: 0; }
+  .flow { border-left: 3px solid #d7dee7; padding-left: 1.1rem; margin: 1.2rem 0; }
+  .msg {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem;
+    background: #f2f5f8; border: 1px solid #dde4ec; border-radius: 6px;
+    padding: .6rem .8rem; margin: .5rem 0; white-space: pre-wrap;
+  }
+  footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid #e2e5e9; color: #626973; font-size: .85rem; }
 </style>
 </head>
 <body>
-<h1>SMS Program Policies</h1>
-<p class="updated">Personal errand-assistant messaging program &middot; operated by Mahesh</p>
+
+<h1>SMS Program</h1>
+<p class="updated">Operated by Mahesh (sole proprietor) &middot; Filter Coffee Way &middot; Updated 30 August 2026</p>
+
 <p>
-  This is a personal messaging program with a single recipient: its operator.
-  It is not open to the public and does not accept sign-ups.
+  This is a personal errand-assistant text messaging program. It sends
+  transactional order-status messages to a single recipient: the account owner.
+  It is not open to the public and does not accept sign-ups from other people.
 </p>
-<ul>
-  <li><a href="privacy.html">Privacy Policy</a></li>
-  <li><a href="terms.html">SMS Terms and Conditions</a></li>
-</ul>
-<p>Contact: <a href="mailto:filtercoffeeway@gmail.com">filtercoffeeway@gmail.com</a></p>
+
+<h2>Opt-in disclosure</h2>
+
+<div class="disclosure">
+  <p>
+    <strong>By texting an order keyword such as COFFEE to the program number, you
+    agree to receive transactional text messages from Mahesh (Filter Coffee Way)
+    about that order.</strong>
+  </p>
+  <p>
+    Message frequency varies and is determined by you &mdash; typically fewer than
+    10 messages per day, and often none. <strong>Message and data rates may
+    apply.</strong> Reply <strong>HELP</strong> for help. Reply
+    <strong>STOP</strong> to cancel at any time.
+  </p>
+  <p>
+    See our <a href="privacy.html">Privacy Policy</a> and
+    <a href="terms.html">Terms and Conditions</a>. No mobile information is
+    shared with third parties or affiliates for marketing or promotional purposes.
+  </p>
+</div>
+
+<h2>How to opt in</h2>
+<ol>
+  <li><strong>Text a keyword to the program number.</strong> Sending an order
+      keyword (for example <code>COFFEE</code>), or <code>START</code>,
+      <code>YES</code> or <code>UNSTOP</code>, opts you in.</li>
+  <li><strong>You receive an immediate confirmation</strong> naming the program,
+      confirming enrollment, and giving help and opt-out instructions.</li>
+</ol>
+
+<p>The confirmation message is:</p>
+<div class="msg">Mahesh: You are now opted in to receive messages. Msg frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out.</div>
+
+<h2>What the messages look like</h2>
+
+<div class="flow">
+  <p><strong>You text:</strong></p>
+  <div class="msg">coffee</div>
+  <p><strong>You receive an order summary and a spending limit, and are asked to confirm. Nothing is ordered until you reply:</strong></p>
+  <div class="msg">1 drip coffee (medium) for pickup, under Mahesh · cap $5.75 — reply Y to dial</div>
+  <p><strong>You reply:</strong></p>
+  <div class="msg">Y</div>
+  <p><strong>The order is placed by phone, and you receive the result:</strong></p>
+  <div class="msg">☕ drip coffee confirmed · $3.25 · ready 4:12 · #47 — reply N if wrong</div>
+</div>
+
+<h2>How to opt out</h2>
+<p>
+  Reply <strong>STOP</strong> to any message to stop all messages. You will
+  receive one confirmation and nothing further. Reply <strong>START</strong>,
+  <strong>YES</strong> or <strong>UNSTOP</strong> to resume.
+</p>
+
+<h2>Help</h2>
+<p>
+  Reply <strong>HELP</strong> to any message, or email
+  <a href="mailto:filtercoffeeway@gmail.com">filtercoffeeway@gmail.com</a>.
+</p>
+
+<footer>
+  <a href="privacy.html">Privacy Policy</a> &nbsp;&middot;&nbsp;
+  <a href="terms.html">Terms and Conditions</a> &nbsp;&middot;&nbsp;
+  <a href="/">Filter Coffee Way</a>
+</footer>
+
 </body>
 </html>
