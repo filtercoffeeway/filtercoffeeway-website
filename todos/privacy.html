@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Todos — Filter Coffee Way</title>
+  <link rel="icon" href="../assets/favicon.ico" />
+  <meta name="description" content="Privacy policy for Todos, the Chrome extension by Filter Coffee Way: what data it handles, where it's stored, and why each permission is needed." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <style>
+    /* -------------------------------------------------------------
+       Filter Coffee Way — Privacy Policy: Todos
+       ------------------------------------------------------------- */
+
+    :root {
+      --paper:       #f6efe1;
+      --paper-2:     #fbf6ec;
+      --paper-3:     #efe5d0;
+      --ink:         #2b1d12;
+      --ink-2:       #6b5947;
+      --ink-3:       #a89580;
+      --rule:        #e3d6bf;
+      --rule-2:      #d6c5a4;
+      --accent:      #a85a2a;
+      --accent-soft: #d99c5e;
+      --ok:          #6a7d5b;
+      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+
+      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, "Times New Roman", serif;
+      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body {
+      font-family: var(--sans);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 16px;
+      background-image:
+        radial-gradient(rgba(168, 90, 42, 0.035) 1px, transparent 1px),
+        radial-gradient(rgba(43, 29, 18, 0.025) 1px, transparent 1px);
+      background-size: 24px 24px, 37px 37px;
+      background-position: 0 0, 11px 13px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--ink); }
+
+    /* ---------- Container ---------- */
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+
+    /* ---------- Masthead ---------- */
+    .masthead {
+      padding: 22px 0 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .masthead-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
+    .wordmark-sub {
+      display: block;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-top: 4px;
+    }
+    .masthead nav {
+      display: flex; gap: 26px; flex-wrap: wrap;
+      font-size: 13px; font-weight: 500;
+    }
+    .masthead nav a {
+      color: var(--ink-2);
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: color .15s, border-color .15s;
+    }
+    .masthead nav a:hover,
+    .masthead nav a.active { color: var(--ink); border-bottom-color: var(--accent); }
+
+    .issue-strip {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0 0;
+      font-family: var(--sans);
+      font-size: 10.5px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .issue-strip .dot { color: var(--accent); }
+
+    /* ---------- Legal hero ---------- */
+    .legal-hero {
+      padding: 56px 0 40px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .kicker {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .kicker::before {
+      content: ""; width: 28px; height: 1px; background: var(--accent);
+    }
+    .legal-hero h1 {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: clamp(36px, 5vw, 54px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 16px;
+    }
+    .legal-hero .dek {
+      font-family: var(--serif);
+      font-weight: 300;
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--ink-2);
+      max-width: 62ch;
+      margin-bottom: 20px;
+    }
+    .meta-line {
+      font-family: var(--sans);
+      font-size: 12.5px;
+      color: var(--ink-3);
+      letter-spacing: 0.02em;
+    }
+    .meta-line strong { color: var(--ink-2); font-weight: 600; }
+
+    /* ---------- Legal body ---------- */
+    .legal-body {
+      max-width: 760px;
+      padding: 56px 0 72px;
+    }
+    .legal-body p {
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--ink-2);
+      margin-bottom: 22px;
+    }
+    .legal-body p:last-child { margin-bottom: 0; }
+    .legal-body strong { font-weight: 600; color: var(--ink); }
+    .legal-body ul {
+      margin: 0 0 26px;
+      padding-left: 22px;
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--ink-2);
+    }
+    .legal-body li { margin-bottom: 10px; }
+    .legal-body li:last-child { margin-bottom: 0; }
+    .legal-body li strong { color: var(--ink); }
+
+    .prose-heading {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 24px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin-top: 48px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .prose-heading:first-child { margin-top: 0; }
+    .prose-heading::before {
+      content: "";
+      display: block;
+      width: 4px;
+      height: 22px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Permission table */
+    .perm-table {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 6px 30px;
+      margin: 0 0 26px;
+    }
+    .perm-row {
+      padding: 18px 0;
+      border-bottom: 1px dashed var(--rule);
+    }
+    .perm-row:last-child { border-bottom: none; }
+    .perm-name {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+    .perm-desc {
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink-2);
+    }
+
+    /* ---------- Ornament ---------- */
+    .ornament-divider {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px;
+      padding: 8px 0;
+      color: var(--accent);
+    }
+    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
+    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
+
+    /* ---------- Footer ---------- */
+    footer {
+      padding: 56px 0 80px;
+      border-top: 1px solid var(--rule);
+      margin-top: 0;
+    }
+    .footer-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-mark {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--ink-2);
+    }
+    .footer-mark .accent { color: var(--accent); }
+    .footer-meta {
+      font-size: 12px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+    }
+    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
+    .footer-meta a:hover { color: var(--accent); }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .masthead-row { flex-direction: column; align-items: flex-start; }
+      .perm-table { padding: 6px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ====================== MASTHEAD ====================== -->
+  <header class="masthead">
+    <div class="masthead-row">
+      <a href="../index.html" style="text-decoration:none; display:flex; align-items:center; gap:14px;">
+        <img src="../assets/logo.svg" alt="Filter Coffee Way" width="36" height="36" style="border-radius:8px; flex-shrink:0;" />
+        <div>
+          <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
+          <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
+        </div>
+      </a>
+      <nav>
+        <a href="../about.html">About Filter Coffee</a>
+        <a href="../index.html#blog">Blog</a>
+        <a href="../index.html#designs">System Design</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    <div class="issue-strip">
+      <span>filtercoffeeway.com &nbsp;·&nbsp; Vol. I</span>
+      <span>San Francisco</span>
+    </div>
+  </header>
+
+  <!-- ====================== LEGAL HERO ====================== -->
+  <section class="legal-hero">
+    <span class="kicker">Privacy Policy</span>
+    <h1>Todos</h1>
+    <p class="dek">Todos is a Chrome extension by Filter Coffee Way that turns your new tab into a note and to-do list, with one-click capture from any webpage. This page explains what data it handles, where it lives, and why each browser permission is requested.</p>
+    <div class="meta-line"><strong>Effective:</strong> September 21, 2026 &nbsp;·&nbsp; <strong>Applies to:</strong> the "Todos" Chrome extension</div>
+  </section>
+
+  <!-- ====================== LEGAL BODY ====================== -->
+  <div class="legal-body">
+
+    <h2 class="prose-heading">Summary</h2>
+    <p><strong>Todos does not collect, transmit, or sell any of your data.</strong> Everything you type or capture — notes, checkboxes, notebooks, and the source of any captured highlight — is stored using Chrome's own storage APIs, on your device and, if you're signed in to Chrome, synced by Google across your own devices. Filter Coffee Way never receives a copy, runs no server that Todos talks to, and has no analytics or tracking code in the extension.</p>
+
+    <h2 class="prose-heading">What Todos stores, and where</h2>
+    <p>Todos keeps the following, entirely through <code>chrome.storage.local</code> and <code>chrome.storage.sync</code>:</p>
+    <ul>
+      <li><strong>Note content</strong> you type or capture, including checkbox state, nesting, and notebook assignment.</li>
+      <li><strong>Source information</strong> for a captured highlight, link, or image — the page URL, page title, the captured text, a link to the favicon Chrome already has cached, and a text fragment used to scroll back to the highlight later.</li>
+      <li><strong>Preferences</strong>, such as your theme choice (light/dark) and default capture notebook.</li>
+    </ul>
+    <p><code>chrome.storage.local</code> is the source of truth and never leaves your device. <code>chrome.storage.sync</code> is Google's own extension-sync mechanism — the same one Chrome uses to sync your bookmarks and settings — and is governed by your Google Account's own privacy controls, not by Filter Coffee Way. Uninstalling Todos removes its local data; synced data is cleared the same way any other extension's synced storage is, through Chrome.</p>
+
+    <h2 class="prose-heading">Permissions Todos requests, and why</h2>
+    <div class="perm-table">
+      <div class="perm-row">
+        <div class="perm-name">storage</div>
+        <div class="perm-desc">Lets Todos save your notes locally and sync them via Chrome, as described above.</div>
+      </div>
+      <div class="perm-row">
+        <div class="perm-name">activeTab</div>
+        <div class="perm-desc">Granted only for the instant you click the toolbar icon or press the keyboard shortcut. Used to read your current text selection on that one tab, so it can be saved as a note. No access outside that click, and no other tabs are touched.</div>
+      </div>
+      <div class="perm-row">
+        <div class="perm-name">scripting</div>
+        <div class="perm-desc">Runs a small, one-off script in the active tab at the moment of a capture (toolbar click, shortcut, or right-click "Save to Todos") to read the selected text or the clicked link/image. No content script runs persistently on any page.</div>
+      </div>
+      <div class="perm-row">
+        <div class="perm-name">contextMenus</div>
+        <div class="perm-desc">Adds the "Save to Todos" right-click menu item for selected text, links, and images, built only from your own local notebook list.</div>
+      </div>
+      <div class="perm-row">
+        <div class="perm-name">favicon</div>
+        <div class="perm-desc">Shows the source site's icon next to a captured note by reading Chrome's own local favicon cache — no network request is made to the site.</div>
+      </div>
+    </div>
+
+    <h2 class="prose-heading">Third parties</h2>
+    <p>Todos does not use analytics, advertising, or crash-reporting SDKs, and does not send data to Filter Coffee Way or any other third party. The only external party involved in storing your data is Google, through the standard <code>chrome.storage.sync</code> mechanism built into Chrome itself — the same channel used for browser bookmarks and settings.</p>
+
+    <h2 class="prose-heading">Your control over your data</h2>
+    <p>You can delete any note or notebook directly in Todos at any time. Removing the extension deletes its local data; synced data is removed the same way as for any other extension, via your Google Account's Chrome sync settings. Todos also supports exporting your notes as Markdown or JSON before you remove anything.</p>
+
+    <h2 class="prose-heading">Children's privacy</h2>
+    <p>Todos is not directed at children and does not knowingly collect information from anyone, regardless of age — it collects nothing at all, as described above.</p>
+
+    <h2 class="prose-heading">Changes to this policy</h2>
+    <p>If this policy changes, the update will be posted on this page with a revised effective date.</p>
+
+    <h2 class="prose-heading">Contact</h2>
+    <p>Questions about this policy or Todos's data handling can be sent to <a href="mailto:filtercoffeeway@gmail.com">filtercoffeeway@gmail.com</a>.</p>
+
+  </div>
+
+  <!-- ====================== FOOTER ====================== -->
+  <footer>
+    <div class="ornament-divider">
+      <span class="line"></span>
+      <span class="dot">❦</span>
+      <span class="line"></span>
+    </div>
+    <div class="footer-row" style="margin-top:24px;">
+      <div class="footer-mark">
+        Brewed in Madras. Served to the world. <span class="accent">— filter coffee way</span>
+      </div>
+      <div class="footer-meta">
+        © 2026 · filtercoffeeway.com
+        <a href="../about.html">About Filter Coffee</a>
+        <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
+        <a href="../_topic-roadmap.html">Roadmap</a>
+        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
