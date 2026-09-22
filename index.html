@@ -4,932 +4,250 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Filter Coffee Way</title>
-  <link rel="icon" href="assets/favicon.ico" />
-  <meta name="description" content="Ground fresh. Think deep. Build strong. Long-form writing on distributed systems, engineering culture, and the craft of building software — brewed in Madras." />
+  <meta name="description" content="Mahesh's workshop: projects, essays, and software engineering notes. Ground fresh. Think deep. Build strong. Brewed in Madras." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
   <style>
-    /* -------------------------------------------------------------
-       Filter Coffee Way
-       Editorial / warm-paper site
-       ------------------------------------------------------------- */
+/* Filter Coffee Way — base */
+:root {
+  --paper:#f6efe1; --paper-2:#fbf6ec; --paper-3:#efe5d0;
+  --ink:#2b1d12; --ink-2:#6b5947; --ink-3:#a89580;
+  --rule:#e3d6bf; --rule-2:#d6c5a4;
+  --accent:#a85a2a; --accent-soft:#d99c5e; --ok:#6a7d5b;
+  --shadow:0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+  --serif:"Fraunces","Iowan Old Style",Georgia,serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono","SF Mono",Menlo,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { -webkit-font-smoothing:antialiased; }
+body {
+  font-family:var(--sans); background:var(--paper); color:var(--ink);
+  line-height:1.6; font-size:16px;
+  background-image:
+    radial-gradient(rgba(168,90,42,0.035) 1px, transparent 1px),
+    radial-gradient(rgba(43,29,18,0.025) 1px, transparent 1px);
+  background-size:24px 24px, 37px 37px; background-position:0 0, 11px 13px;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { color:var(--ink); }
+.container { max-width:1180px; margin:0 auto; padding:0 40px; }
 
-    :root {
-      --paper:       #f6efe1;
-      --paper-2:     #fbf6ec;
-      --paper-3:     #efe5d0;
-      --ink:         #2b1d12;
-      --ink-2:       #6b5947;
-      --ink-3:       #a89580;
-      --rule:        #e3d6bf;
-      --rule-2:      #d6c5a4;
-      --accent:      #a85a2a;
-      --accent-soft: #d99c5e;
-      --ok:          #6a7d5b;
-      --shadow:      0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
 
-      --serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, "Times New Roman", serif;
-      --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --mono:  "JetBrains Mono", "SF Mono", "Fira Code", Menlo, monospace;
-    }
+/* Masthead */
+.masthead { padding:22px 0 16px; border-bottom:1px solid var(--rule); }
+.masthead-row { display:flex; align-items:baseline; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+.brand { display:flex; align-items:center; gap:14px; }
+.brand img { border-radius:8px; }
+.wordmark { font-family:var(--serif); font-weight:700; font-size:22px; letter-spacing:-0.01em; color:var(--ink); }
+.wordmark .amp { color:var(--accent); font-style:italic; font-weight:500; }
+.wordmark-sub { display:block; font-size:11px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-3); margin-top:4px; }
+.masthead nav { display:flex; gap:26px; flex-wrap:wrap; font-size:13px; font-weight:500; }
+.masthead nav a { color:var(--ink-2); border-bottom:1px solid transparent; padding-bottom:2px; }
+.masthead nav a:hover, .masthead nav a.active { color:var(--ink); border-bottom-color:var(--accent); }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-    body {
-      font-family: var(--sans);
-      background: var(--paper);
-      color: var(--ink);
-      line-height: 1.6;
-      font-size: 16px;
-      background-image:
-        radial-gradient(rgba(168, 90, 42, 0.035) 1px, transparent 1px),
-        radial-gradient(rgba(43, 29, 18, 0.025) 1px, transparent 1px);
-      background-size: 24px 24px, 37px 37px;
-      background-position: 0 0, 11px 13px;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--ink); }
+/* Common bits */
+.kicker { font-size:11px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:var(--accent); display:inline-flex; align-items:center; gap:10px; }
+.kicker::before { content:""; width:28px; height:1px; background:var(--accent); }
+.cta { display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--ink); padding:10px 0; border-bottom:2px solid var(--accent); }
+.cta:hover { color:var(--accent); }
+.cta-2 { border-bottom-color:var(--rule-2); color:var(--ink-2); }
+.pill { display:inline-block; padding:3px 9px; border-radius:99px; background:var(--paper-3); color:var(--ink-2); font-size:11px; letter-spacing:0.02em; }
+.pill.live { color:var(--ok); background:color-mix(in srgb, var(--ok) 14%, var(--paper-2)); }
+.section { padding:64px 0; border-bottom:1px solid var(--rule); }
+.section-head { display:flex; align-items:baseline; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:32px; }
+.section-num { font-family:var(--serif); font-style:italic; font-weight:300; font-size:18px; color:var(--accent); margin-right:12px; }
+.section-title { font-family:var(--serif); font-weight:600; font-size:32px; letter-spacing:-0.015em; }
+.section-aside { font-size:13px; color:var(--ink-3); font-style:italic; max-width:42ch; }
+.card { background:var(--paper-2); border:1px solid var(--rule); border-radius:4px; padding:26px 28px; transition:transform .2s, box-shadow .2s; display:flex; flex-direction:column; color:inherit; }
+.card:hover { transform:translateY(-3px); box-shadow:var(--shadow); color:inherit; }
+.card h3 { font-family:var(--serif); font-weight:600; font-size:24px; line-height:1.15; letter-spacing:-0.01em; margin-bottom:8px; }
+.card p { font-size:14px; color:var(--ink-2); line-height:1.55; }
+.card .meta { margin-top:auto; padding-top:16px; display:flex; gap:6px; flex-wrap:wrap; }
+.card-kicker { font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-bottom:12px; }
 
-    /* ---------- Container ---------- */
-    .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+/* Footer */
+footer { padding:48px 0 72px; }
+.footer-row { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:16px; }
+.footer-mark { font-family:var(--serif); font-style:italic; font-size:16px; color:var(--ink-2); }
+.footer-mark .accent { color:var(--accent); }
+.footer-meta { font-size:12px; color:var(--ink-3); }
+.footer-meta a { color:var(--ink-2); margin-left:18px; }
 
-    /* ---------- Masthead ---------- */
-    .masthead {
-      padding: 22px 0 16px;
-      border-bottom: 1px solid var(--rule);
-    }
-    .masthead-row {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: 24px; flex-wrap: wrap;
-    }
-    .wordmark {
-      font-family: var(--serif);
-      font-weight: 700;
-      font-size: 22px;
-      letter-spacing: -0.01em;
-      color: var(--ink);
-    }
-    .wordmark .amp { color: var(--accent); font-style: italic; font-weight: 500; }
-    .wordmark-sub {
-      display: block;
-      font-family: var(--sans);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--ink-3);
-      margin-top: 4px;
-    }
-    .masthead nav {
-      display: flex; gap: 26px; flex-wrap: wrap;
-      font-size: 13px; font-weight: 500;
-    }
-    .masthead nav a {
-      color: var(--ink-2);
-      letter-spacing: 0.02em;
-      border-bottom: 1px solid transparent;
-      padding-bottom: 2px;
-      transition: color .15s, border-color .15s;
-    }
-    .masthead nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+@media (max-width:900px) {
+  .container { padding:0 24px; }
+  .masthead-row { flex-direction:column; align-items:flex-start; }
+}
 
-    .issue-strip {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0 0;
-      font-family: var(--sans);
-      font-size: 10.5px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--ink-3);
-    }
-    .issue-strip .dot { color: var(--accent); }
-
-    /* ---------- Hero ---------- */
-    .cover {
-      display: grid;
-      grid-template-columns: 1.55fr 1fr;
-      gap: 56px;
-      padding: 64px 0 72px;
-      border-bottom: 1px solid var(--rule);
-      position: relative;
-    }
-    .kicker {
-      font-family: var(--sans);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 18px;
-      display: inline-flex; align-items: center; gap: 10px;
-    }
-    .kicker::before {
-      content: ""; width: 28px; height: 1px; background: var(--accent);
-    }
-    .cover h1 {
-      font-family: var(--serif);
-      font-weight: 700;
-      font-size: clamp(48px, 7vw, 84px);
-      line-height: 0.98;
-      letter-spacing: -0.025em;
-      color: var(--ink);
-      margin-bottom: 18px;
-    }
-    .cover h1 em {
-      font-style: italic;
-      font-weight: 400;
-      color: var(--accent);
-    }
-    .cover .dek {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 22px;
-      line-height: 1.4;
-      color: var(--ink-2);
-      max-width: 38ch;
-      margin-bottom: 28px;
-    }
-    .cta {
-      display: inline-flex; align-items: center; gap: 10px;
-      font-family: var(--sans);
-      font-size: 14px; font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--ink);
-      padding: 12px 0;
-      border-bottom: 2px solid var(--accent);
-    }
-    .cta:hover { color: var(--accent); }
-    .cta .arrow { transition: transform .2s; }
-    .cta:hover .arrow { transform: translateX(4px); }
-    .cta-secondary {
-      border-bottom-color: var(--rule-2);
-      color: var(--ink-2);
-    }
-    .cta-secondary:hover { color: var(--ink); border-bottom-color: var(--ink-3); }
-
-    /* Drop cap intro paragraph */
-    .intro {
-      font-family: var(--serif);
-      font-size: 17px;
-      line-height: 1.6;
-      color: var(--ink-2);
-      max-width: 52ch;
-      margin: 24px 0 32px;
-    }
-    .intro::first-letter {
-      font-family: var(--serif);
-      font-weight: 700;
-      font-size: 58px;
-      float: left;
-      line-height: 0.85;
-      padding: 6px 10px 0 0;
-      color: var(--accent);
-    }
-
-    /* ---------- Principles block (hero right col) ---------- */
-    .principles-block {
-      background: var(--paper-2);
-      border: 1px solid var(--rule);
-      border-radius: 6px;
-      padding: 28px 30px;
-      align-self: start;
-      box-shadow: var(--shadow);
-      position: relative;
-    }
-    .principles-block::before {
-      content: "THE SEVEN PRINCIPLES";
-      position: absolute;
-      top: -9px; left: 22px;
-      background: var(--paper);
-      padding: 0 10px;
-      font-size: 10px;
-      letter-spacing: 0.24em;
-      color: var(--accent);
-      font-weight: 600;
-    }
-    .principle-item {
-      display: flex;
-      gap: 14px;
-      padding: 11px 0;
-      border-bottom: 1px dashed var(--rule);
-      align-items: flex-start;
-    }
-    .principle-item:last-child { border-bottom: none; padding-bottom: 0; }
-    .principle-item:first-child { padding-top: 4px; }
-    .principle-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--accent);
-      letter-spacing: 0.08em;
-      flex-shrink: 0;
-      padding-top: 3px;
-      min-width: 22px;
-    }
-    .principle-name {
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--ink);
-      margin-bottom: 2px;
-    }
-    .principle-desc {
-      font-size: 12px;
-      color: var(--ink-2);
-      line-height: 1.45;
-    }
-
-    /* ---------- Section header ---------- */
-    .section { padding: 72px 0; border-bottom: 1px solid var(--rule); }
-    .section:last-of-type { border-bottom: none; }
-    .section-head {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: 24px; flex-wrap: wrap;
-      margin-bottom: 36px;
-    }
-    .section-num {
-      font-family: var(--serif);
-      font-style: italic;
-      font-weight: 300;
-      font-size: 18px;
-      color: var(--accent);
-      margin-right: 12px;
-    }
-    .section-title {
-      font-family: var(--serif);
-      font-weight: 600;
-      font-size: 32px;
-      letter-spacing: -0.015em;
-      color: var(--ink);
-    }
-    .section-aside {
-      font-size: 13px;
-      color: var(--ink-3);
-      font-style: italic;
-      max-width: 40ch;
-    }
-    .section-aside a { color: var(--ink-2); border-bottom: 1px solid var(--rule); }
-    .section-aside a:hover { color: var(--accent); border-color: var(--accent); }
-
-    /* ---------- Article cards / grid ---------- */
-    .designs-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 28px;
-    }
-    .article-card {
-      background: var(--paper-2);
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 26px 28px 28px;
-      display: flex; flex-direction: column;
-      transition: transform .2s, box-shadow .2s, border-color .2s;
-      position: relative;
-      min-height: 200px;
-    }
-    .article-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow);
-      border-color: var(--rule-2);
-    }
-    .article-card .card-kicker {
-      font-size: 10.5px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--ink-3);
-      margin-bottom: 14px;
-      font-weight: 600;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .article-card h3 {
-      font-family: var(--serif);
-      font-weight: 600;
-      font-size: 26px;
-      line-height: 1.1;
-      letter-spacing: -0.01em;
-      color: var(--ink);
-      margin-bottom: 10px;
-    }
-    .article-card h3 a { color: inherit; }
-    .article-card .summary {
-      font-size: 14px;
-      color: var(--ink-2);
-      line-height: 1.55;
-      margin-bottom: 18px;
-    }
-    .article-card .card-meta {
-      margin-top: auto;
-      display: flex; gap: 6px; flex-wrap: wrap;
-      font-size: 11px;
-      color: var(--ink-3);
-    }
-    .article-card .card-meta .pill {
-      padding: 3px 9px;
-      border-radius: 99px;
-      background: var(--paper-3);
-      color: var(--ink-2);
-      letter-spacing: 0.02em;
-    }
-
-    .span-6 { grid-column: span 6; }
-    .span-4 { grid-column: span 4; }
-    .span-3 { grid-column: span 3; }
-
-    .card-feature {
-      grid-column: span 6;
-      background: linear-gradient(135deg, var(--paper-2) 0%, var(--paper-3) 100%);
-      border-color: var(--rule-2);
-      min-height: 240px;
-    }
-    .card-feature h3 { font-size: 34px; }
-    .card-feature::after {
-      content: "";
-      position: absolute;
-      top: 18px; right: 22px;
-      width: 8px; height: 8px;
-      background: var(--ok);
-      border-radius: 50%;
-      box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 18%, transparent);
-    }
-
-    .badge-published {
-      color: var(--ok) !important;
-      background: color-mix(in srgb, var(--ok) 14%, var(--paper-2)) !important;
-    }
-    .badge-soon {
-      color: var(--accent) !important;
-      background: color-mix(in srgb, var(--accent) 10%, var(--paper-2)) !important;
-    }
-
-    /* ---------- Patterns row ---------- */
-    .patterns-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 28px;
-    }
-    .pattern {
-      background: var(--paper-2);
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 30px 30px 28px;
-      transition: transform .2s, box-shadow .2s;
-    }
-    .pattern:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-    .pattern .ornament {
-      width: 36px; height: 36px;
-      display: flex; align-items: center; justify-content: center;
-      border: 1px solid var(--rule-2);
-      border-radius: 50%;
-      font-family: var(--serif);
-      font-style: italic;
-      font-weight: 500;
-      font-size: 17px;
-      color: var(--accent);
-      margin-bottom: 18px;
-      background: var(--paper);
-    }
-    .pattern h4 {
-      font-family: var(--serif);
-      font-weight: 600;
-      font-size: 20px;
-      color: var(--ink);
-      margin-bottom: 8px;
-      letter-spacing: -0.01em;
-    }
-    .pattern h4 a { color: inherit; }
-    .pattern h4 a:hover { color: var(--accent); }
-    .pattern p {
-      font-size: 13.5px;
-      color: var(--ink-2);
-      line-height: 1.55;
-    }
-
-    /* ---------- Numbers reference ---------- */
-    .numbers-wrap {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px 64px;
-    }
-    .number-group h5 {
-      font-family: var(--sans);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--rule);
-    }
-    .number-row {
-      display: flex; align-items: baseline;
-      gap: 8px;
-      padding: 9px 0;
-      font-size: 14px;
-      border-bottom: 1px dotted var(--rule);
-    }
-    .number-row:last-child { border-bottom: none; }
-    .number-row .label { color: var(--ink-2); white-space: nowrap; }
-    .number-row .leader {
-      flex: 1;
-      border-bottom: 1px dotted var(--rule-2);
-      transform: translateY(-4px);
-      margin: 0 4px;
-    }
-    .number-row .value {
-      font-family: var(--mono);
-      font-weight: 500;
-      font-size: 13px;
-      color: var(--ink);
-      white-space: nowrap;
-    }
-
-    /* ---------- Roadmap CTA ---------- */
-    .roadmap-cta {
-      background: var(--paper-2);
-      border: 1px solid var(--rule);
-      border-radius: 4px;
-      padding: 44px 48px;
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 32px;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .roadmap-cta::before {
-      content: "";
-      position: absolute;
-      top: 0; right: 0; bottom: 0;
-      width: 6px;
-      background: var(--accent);
-    }
-    .roadmap-cta h3 {
-      font-family: var(--serif);
-      font-weight: 600;
-      font-size: 28px;
-      letter-spacing: -0.015em;
-      color: var(--ink);
-      margin-bottom: 10px;
-    }
-    .roadmap-cta p {
-      font-size: 14.5px;
-      color: var(--ink-2);
-      max-width: 60ch;
-    }
-    .roadmap-cta .right { text-align: right; }
-
-    /* ---------- Footer ---------- */
-    footer {
-      padding: 56px 0 80px;
-      border-top: 1px solid var(--rule);
-      margin-top: 24px;
-    }
-    .footer-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      flex-wrap: wrap; gap: 16px;
-    }
-    .footer-mark {
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: 16px;
-      color: var(--ink-2);
-    }
-    .footer-mark .accent { color: var(--accent); }
-    .footer-meta {
-      font-size: 12px;
-      color: var(--ink-3);
-      letter-spacing: 0.04em;
-    }
-    .footer-meta a { color: var(--ink-2); margin-left: 18px; }
-    .footer-meta a:hover { color: var(--accent); }
-
-    /* ---------- Ornament ---------- */
-    .ornament-divider {
-      display: flex; align-items: center; justify-content: center;
-      gap: 14px;
-      padding: 8px 0;
-      color: var(--accent);
-    }
-    .ornament-divider .line { flex: none; width: 24px; height: 1px; background: var(--rule-2); }
-    .ornament-divider .dot { font-family: var(--serif); font-style: italic; font-size: 14px; }
-
-    /* ---------- Responsive ---------- */
-    @media (max-width: 900px) {
-      .container { padding: 0 24px; }
-      .cover { grid-template-columns: 1fr; gap: 36px; padding: 44px 0 56px; }
-      .designs-grid { grid-template-columns: 1fr; }
-      .span-6, .span-4, .span-3, .card-feature { grid-column: span 1; }
-      .patterns-row { grid-template-columns: 1fr; }
-      .numbers-wrap { grid-template-columns: 1fr; gap: 36px; }
-      .roadmap-cta { grid-template-columns: 1fr; padding: 32px; }
-      .roadmap-cta .right { text-align: left; }
-      .section { padding: 56px 0; }
-      .masthead-row { flex-direction: column; align-items: flex-start; }
-      .issue-strip { font-size: 9.5px; }
-    }
-  </style>
-</head>
-<body>
-
+/* ---------- Page ---------- */
+.hero { padding:72px 0 56px; border-bottom:1px solid var(--rule); max-width:860px; }
+.hero h1 { font-family:var(--serif); font-weight:700; font-size:clamp(44px,6vw,72px); line-height:1; letter-spacing:-0.025em; margin:18px 0 20px; }
+.hero h1 em { font-style:italic; font-weight:400; color:var(--accent); }
+.hero .dek { font-family:var(--serif); font-weight:300; font-size:21px; color:var(--ink-2); max-width:44ch; }
+.products { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.product { padding:0; overflow:hidden; }
+.product .shot { background:var(--paper-3); border-bottom:1px solid var(--rule); padding:26px; min-height:210px; display:flex; align-items:center; justify-content:center; }
+.product .body { padding:24px 28px 26px; display:flex; flex-direction:column; flex:1; }
+.product h3 { font-size:30px; }
+.product .tag { font-family:var(--serif); font-style:italic; color:var(--accent); font-size:16px; margin-bottom:10px; }
+.product .meta { padding-top:14px; }
+.product .links { display:flex; gap:22px; margin-top:14px; font-size:13px; font-weight:600; }
+/* mock visuals */
+.call { width:100%; max-width:340px; font-family:var(--mono); font-size:11.5px; display:flex; flex-direction:column; gap:8px; }
+.bub { padding:8px 11px; border-radius:10px; background:var(--paper-2); border:1px solid var(--rule); max-width:85%; }
+.bub.me { align-self:flex-end; background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.bub.sms { align-self:center; background:color-mix(in srgb,var(--ok) 16%,var(--paper-2)); border-color:transparent; color:var(--ok); }
+.tab { width:100%; max-width:340px; background:var(--paper-2); border:1px solid var(--rule-2); border-radius:6px; padding:14px 16px; font-size:13px; }
+.tab .bar { display:flex; gap:5px; margin-bottom:12px; } .tab .bar i { width:8px; height:8px; border-radius:50%; background:var(--rule-2); }
+.tab .row { padding:5px 0; border-bottom:1px dashed var(--rule); display:flex; gap:8px; }
+.tab .row:last-child { border:none; }
+.tab .box { width:13px; height:13px; border:1.5px solid var(--ink-3); border-radius:3px; margin-top:4px; flex-shrink:0; }
+.tab .done { color:var(--ink-3); text-decoration:line-through; } .tab .done .box { background:var(--accent); border-color:var(--accent); }
+.tab .src { font-size:10.5px; color:var(--ink-3); font-family:var(--mono); }
+.posts { border-top:1px solid var(--rule); }
+.post { display:grid; grid-template-columns:140px 1fr 110px; gap:24px; padding:22px 0; border-bottom:1px solid var(--rule); align-items:baseline; color:inherit; }
+.post:hover h4 { color:var(--accent); }
+.post .where { font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-3); font-weight:600; }
+.post h4 { font-family:var(--serif); font-size:22px; font-weight:600; letter-spacing:-0.01em; line-height:1.2; transition:color .15s; }
+.post p { font-size:14px; color:var(--ink-2); margin-top:4px; }
+.post .go { text-align:right; font-size:13px; color:var(--accent); }
+.notebook { display:grid; grid-template-columns:1fr 1fr 1fr; gap:22px; }
+.notebook .card h3 { font-size:21px; }
+.notebook .small { padding:18px 22px; }
+.notebook .small h3 { font-size:17px; margin:0; }
+.principles-strip { display:flex; flex-wrap:wrap; gap:10px 28px; font-family:var(--serif); font-style:italic; font-size:17px; color:var(--ink-2); }
+.principles-strip span b { font-family:var(--mono); font-style:normal; font-weight:500; font-size:11px; color:var(--accent); margin-right:6px; }
+@media (max-width:900px){ .products,.notebook{grid-template-columns:1fr;} .post{grid-template-columns:1fr; gap:4px;} .post .go{text-align:left;} }
+</style>
+</head><body>
 <div class="container">
-
-  <!-- ====================== MASTHEAD ====================== -->
-  <header class="masthead">
-    <div class="masthead-row">
-      <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:14px;">
-        <img src="assets/logo.svg" alt="Filter Coffee Way" width="36" height="36" style="border-radius:8px; flex-shrink:0;" />
-        <div>
-          <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
-          <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
-        </div>
-      </a>
-      <nav>
-        <a href="about.html">About Filter Coffee</a>
-        <a href="#voice-agent">Voice Agent</a>
-        <a href="#blog">Blog</a>
-        <a href="#designs">System Design</a>
-        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+<header class="masthead">
+  <div class="masthead-row">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="" width="36" height="36" />
+      <div>
+        <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
+        <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
+      </div>
+    </a>
+    <nav>
+        <a href="#projects">Projects</a>
+        <a href="#writing">Writing</a>
+        <a href="#engineering">Software Engineering</a>
+        <a href="about-me.html">About Me</a>
+        <a href="about.html">Filter Coffee</a>
       </nav>
-    </div>
-    <div class="issue-strip">
-      <span>filtercoffeeway.com &nbsp;·&nbsp; Vol. I</span>
-      <span>San Francisco</span>
-    </div>
-  </header>
+  </div>
+</header>
+<section class="hero">
+  <span class="kicker">Filter Coffee Way</span>
+  <h1>I build small, useful things <em>— and write down what I learn.</em></h1>
+  <p class="dek">A Chrome extension on the Web Store, a voice agent experiment, a few essays, and a software engineering notebook. Brewed in Madras, ground fresh in San Francisco.</p>
+</section>
 
-  <!-- ====================== HERO ====================== -->
-  <section class="cover">
-    <div class="cover-main">
-      <h1>Ground fresh.<br><em>Think deep.</em></h1>
-      <p class="dek">Writing on distributed systems, engineering culture, and the craft of building software — served through the lens of South Indian filter coffee.</p>
-
-      <p class="intro">Filter coffee is not instant. It is slow, deliberate, and demanding — ground fresh each morning, dripped through a steel percolator, served only when it is ready. That is the philosophy here. Every post starts from first principles. Every system design walks the trade-offs, not just the answers. Every idea is brewed until it is worth serving.</p>
-
-      <div style="display:flex; gap:32px; flex-wrap:wrap;">
-        <a class="cta" href="https://blog.filtercoffeeway.com/i-am-the-filter-coffee-way" target="_blank" rel="noopener">
-          Read the manifesto <span class="arrow">→</span>
-        </a>
-        <a class="cta cta-secondary" href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">
-          Explore the blog <span class="arrow">→</span>
-        </a>
-      </div>
-    </div>
-
-    <aside class="principles-block">
-      <div class="principle-item">
-        <span class="principle-num">01</span>
-        <div>
-          <div class="principle-name">Grind fresh</div>
-          <div class="principle-desc">First-principles thinking before reaching for borrowed solutions</div>
+<section class="section" id="projects">
+  <div class="section-head">
+    <div><span class="section-num">i.</span><span class="section-title">Projects</span></div>
+    <div class="section-aside">One shipped for anyone to use, one built and demoed. Each is labelled for what it is.</div>
+  </div>
+  <div class="products">
+    <div class="card product">
+      <div class="shot">
+        <div class="call">
+          <div class="bub me">One small filter coffee for pickup, please.</div>
+          <div class="bub">Sure! Anything else with that?</div>
+          <div class="bub me">That's all. Name is Mahesh.</div>
+          <div class="bub sms">SMS · Order placed · ready 8:40 am</div>
         </div>
       </div>
-      <div class="principle-item">
-        <span class="principle-num">02</span>
-        <div>
-          <div class="principle-name">Drip slow</div>
-          <div class="principle-desc">Deep work cannot be hurried; protect uninterrupted time</div>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">03</span>
-        <div>
-          <div class="principle-name">Find the ratio</div>
-          <div class="principle-desc">There is no universal right answer — calibrate to context</div>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">04</span>
-        <div>
-          <div class="principle-name">Pour with intention</div>
-          <div class="principle-desc">How you communicate matters as much as what you communicate</div>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">05</span>
-        <div>
-          <div class="principle-name">Show up every morning</div>
-          <div class="principle-desc">Consistency is the highest form of craft; raise the floor</div>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">06</span>
-        <div>
-          <div class="principle-name">Name the instant coffee</div>
-          <div class="principle-desc">Shortcuts are fine; self-deception about them is not</div>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">07</span>
-        <div>
-          <div class="principle-name">Brew the coffee, not the cup</div>
-          <div class="principle-desc">Ship the thing itself before polishing the container</div>
-        </div>
-      </div>
-    </aside>
-  </section>
-
-  <!-- ====================== VOICE AGENT ====================== -->
-
-  <section class="section" id="voice-agent">
-    <div class="section-head">
-      <div>
-        <span class="section-num">i.</span>
-        <span class="section-title">Voice agent</span>
-      </div>
-      <div class="section-aside">An agent that places real phone calls on my behalf &mdash; ordering a coffee by calling a restaurant whose order line is, as it happens, also a voice agent. It texts me the result.</div>
-    </div>
-
-    <div class="patterns-row">
-      <div class="pattern">
-        <div class="ornament">&sect;</div>
-        <h4><a href="sms/privacy.html">SMS privacy policy</a></h4>
-        <p>What the messaging program collects, and the commitment that mobile numbers are never shared with third parties for marketing or promotional purposes.</p>
-      </div>
-      <div class="pattern">
-        <div class="ornament">&para;</div>
-        <h4><a href="sms/terms.html">SMS terms &amp; conditions</a></h4>
-        <p>Program description, message frequency, cost, and how to get help or stop. A single-recipient program: I am the only person it ever messages.</p>
+      <div class="body">
+        <div class="card-kicker">Voice agent · Demo</div>
+        <h3>Rangi</h3>
+        <div class="tag">Makes the phone call so you don't have to.</div>
+        <p>An AI agent that places real phone calls on my behalf — ordering from restaurants, even when the restaurant's own line is another AI — and texts me the result.</p>
+        <div class="meta"><span class="pill">Built &amp; demoed</span><span class="pill">Personal use only</span></div>
+        <div class="links"><a href="https://blog.filtercoffeeway.com/i-sent-an-ai-to-order-my-coffee-the-restaurant-s-ai-answered" target="_blank" rel="noopener">How it was built →</a><a href="sms/index.html">SMS program</a></div>
       </div>
     </div>
-  </section>
-
-
-  <!-- ====================== BLOG ====================== -->
-  <section class="section" id="blog">
-    <div class="section-head">
-      <div>
-        <span class="section-num">ii.</span>
-        <span class="section-title">From the blog</span>
-      </div>
-      <div class="section-aside">Published at <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">blog.filtercoffeeway.com</a> — long-form writing on systems and engineering culture.</div>
-    </div>
-
-    <div class="designs-grid">
-
-      <!-- Published: manifesto post -->
-      <a href="https://blog.filtercoffeeway.com/i-am-the-filter-coffee-way" class="article-card card-feature" style="text-decoration:none;" target="_blank" rel="noopener">
-        <div class="card-kicker">The Manifesto · Published</div>
-        <h3>I Am the Filter Coffee Way</h3>
-        <p class="summary">Seven principles. One ritual. One way of thinking. Grind fresh. Drip slow. Find the ratio. A philosophy for the craft of software, written in the language of Madras mornings.</p>
-        <div class="card-meta">
-          <span class="pill badge-published">✓ Published</span>
-          <span class="pill">principles</span>
-          <span class="pill">culture</span>
-          <span class="pill">manifesto</span>
+    <div class="card product">
+      <div class="shot">
+        <div class="tab">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <div class="row done"><span class="box"></span><span>Draft Rangi write-up</span></div>
+          <div class="row"><span class="box"></span><span>Read: consistent hashing<div class="src">↳ captured from en.wikipedia.org</div></span></div>
+          <div class="row"><span class="box"></span><span>Buy Narasu's coffee powder</span></div>
         </div>
-      </a>
-
-      <a href="https://blog.filtercoffeeway.com" class="article-card span-3" style="text-decoration:none;" target="_blank" rel="noopener">
-        <div class="card-kicker">The Decoction · Coming Soon</div>
-        <h3>URL Shortener, Brewed Slow</h3>
-        <p class="summary">The full system design narrated — base62, Cassandra, layered cache. The reasoning behind every call.</p>
-        <div class="card-meta">
-          <span class="pill badge-soon">Coming Soon</span>
-          <span class="pill">system-design</span>
-        </div>
-      </a>
-
-      <a href="https://blog.filtercoffeeway.com" class="article-card span-3" style="text-decoration:none;" target="_blank" rel="noopener">
-        <div class="card-kicker">First Pour · Coming Soon</div>
-        <h3>Show Up Every Morning</h3>
-        <p class="summary">On consistency as craft — why raising the floor matters more than chasing the ceiling.</p>
-        <div class="card-meta">
-          <span class="pill badge-soon">Coming Soon</span>
-          <span class="pill">culture</span>
-        </div>
-      </a>
-
-      <a href="https://blog.filtercoffeeway.com" class="article-card span-4" style="text-decoration:none;" target="_blank" rel="noopener">
-        <div class="card-kicker">The Grounds · Coming Soon</div>
-        <h3>CAP Theorem, Explained</h3>
-        <p class="summary">Consistency, availability, partition tolerance — what you actually give up in practice, and when it matters.</p>
-        <div class="card-meta">
-          <span class="pill badge-soon">Coming Soon</span>
-          <span class="pill">foundations</span>
-        </div>
-      </a>
-
-      <a href="https://blog.filtercoffeeway.com" class="article-card span-4" style="text-decoration:none;" target="_blank" rel="noopener">
-        <div class="card-kicker">The Blend · Coming Soon</div>
-        <h3>B-tree vs LSM-tree</h3>
-        <p class="summary">Two storage engine strategies, two different bets on the workload. What Postgres and Cassandra chose — and why.</p>
-        <div class="card-meta">
-          <span class="pill badge-soon">Coming Soon</span>
-          <span class="pill">databases</span>
-        </div>
-      </a>
-
-      <a href="https://blog.filtercoffeeway.com" class="article-card span-4" style="text-decoration:none;" target="_blank" rel="noopener">
-        <div class="card-kicker">First Pour · Coming Soon</div>
-        <h3>The Junior Engineer's Blueprint</h3>
-        <p class="summary">What to optimize for in years one through three. Hint: it is not the tech stack.</p>
-        <div class="card-meta">
-          <span class="pill badge-soon">Coming Soon</span>
-          <span class="pill">career</span>
-        </div>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- ====================== SYSTEM DESIGN ====================== -->
-  <section class="section" id="designs">
-    <div class="section-head">
-      <div>
-        <span class="section-num">iii.</span>
-        <span class="section-title">System design</span>
       </div>
-      <div class="section-aside">Each design walks the same path: requirements, back-of-envelope numbers, high-level design, the deep dives where it gets interesting.</div>
-    </div>
-
-    <div class="designs-grid">
-
-      <!-- Published feature card -->
-      <a href="designs/url-shortener.html" class="article-card card-feature" style="text-decoration:none;">
-        <div class="card-kicker">Issue 01 · Published</div>
-        <h3>URL Shortener</h3>
-        <p class="summary">TinyURL, bit.ly — the canonical read-heavy redirect. Single-counter ID generation, base62 encoding, layered caching, and a Cassandra-vs-Postgres call that depends entirely on traffic shape.</p>
-        <div class="card-meta">
-          <span class="pill badge-published">✓ Published</span>
-          <span class="pill">read-heavy</span>
-          <span class="pill">caching</span>
-          <span class="pill">token gen</span>
-        </div>
-      </a>
-
-      <a href="designs/pastebin.html" class="article-card span-3" style="text-decoration:none;">
-        <div class="card-kicker">Issue 02 · Published</div>
-        <h3>Paste Bin</h3>
-        <p class="summary">Like URL shortener, but with content. Two-tier storage, inline vs. S3 split, expiry pipeline, and the moment object storage becomes the right answer.</p>
-        <div class="card-meta"><span class="pill badge-published">✓ Published</span><span class="pill">object storage</span><span class="pill">expiry</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-3" style="text-decoration:none;">
-        <div class="card-kicker">Issue 03 · Planned</div>
-        <h3>Instagram</h3>
-        <p class="summary">Photo feed, fan-out on read vs write, and why your celebrity users break everything.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-4" style="text-decoration:none;">
-        <div class="card-kicker">Issue 04</div>
-        <h3>Twitter Timeline</h3>
-        <p class="summary">Hybrid fan-out, timeline cache, the eventual consistency you live with so the home feed loads in time.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-4" style="text-decoration:none;">
-        <div class="card-kicker">Issue 05</div>
-        <h3>YouTube</h3>
-        <p class="summary">Video chunks, ABR ladders, CDN economics, and where transcoding actually happens.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-4" style="text-decoration:none;">
-        <div class="card-kicker">Issue 06</div>
-        <h3>WhatsApp</h3>
-        <p class="summary">Persistent connections, presence, end-to-end encryption, and what "delivered" actually guarantees.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-3" style="text-decoration:none;">
-        <div class="card-kicker">Issue 07</div>
-        <h3>Uber</h3>
-        <p class="summary">Geohashing, driver matching, and the cell-grid that makes "nearby" tractable.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-3" style="text-decoration:none;">
-        <div class="card-kicker">Issue 08</div>
-        <h3>Rate Limiter</h3>
-        <p class="summary">Token bucket, sliding window, and where the limiter itself becomes the bottleneck.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-3" style="text-decoration:none;">
-        <div class="card-kicker">Issue 09</div>
-        <h3>Message Queue</h3>
-        <p class="summary">Kafka-style logs, partitions, consumer groups, and the exactly-once myth.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-      <a href="_topic-roadmap.html" class="article-card span-3" style="text-decoration:none;">
-        <div class="card-kicker">Issue 10</div>
-        <h3>Payments</h3>
-        <p class="summary">Idempotency keys, two-phase commits, and the ledger that has to balance no matter what.</p>
-        <div class="card-meta"><span class="pill badge-soon">Planned</span></div>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- ====================== PATTERNS ====================== -->
-  <section class="section" id="patterns">
-    <div class="section-head">
-      <div>
-        <span class="section-num">iv.</span>
-        <span class="section-title">Patterns &amp; references</span>
-      </div>
-      <div class="section-aside">Reusable building blocks that show up across designs. Open one when you need a refresher on the trade-offs.</div>
-    </div>
-
-    <div class="patterns-row">
-      <div class="pattern">
-        <div class="ornament">§</div>
-        <h4><a href="patterns/caching.html">Caching strategies</a></h4>
-        <p>Cache-aside, write-through, stampede protection, and the CDN edge. Where the cache lives changes everything downstream.</p>
-      </div>
-      <div class="pattern">
-        <div class="ornament">¶</div>
-        <h4><a href="patterns/token-generation.html">Token &amp; ID generation</a></h4>
-        <p>Base62, Snowflake, UUIDs, Zookeeper-coordinated ranges. Pick by collision tolerance, ordering, and coordination cost.</p>
-      </div>
-      <div class="pattern">
-        <div class="ornament">†</div>
-        <h4><a href="patterns/database-selection.html">Database selection</a></h4>
-        <p>Postgres vs Cassandra vs Redis — a decision framework that starts with access patterns, not popularity.</p>
+      <div class="body">
+        <div class="card-kicker">Chrome extension · Live</div>
+        <h3>Todos</h3>
+        <div class="tag">Your new tab, as a notebook.</div>
+        <p>Turns the new tab into notes and to-dos, with one-click capture from any webpage. No server, no analytics — everything stays in Chrome storage.</p>
+        <div class="meta"><span class="pill live">✓ Live on Chrome Web Store</span><span class="pill">Free</span></div>
+        <div class="links"><a href="https://chromewebstore.google.com/detail/dmegmkgoomfkgenipfodoeblfjnhpjok" target="_blank" rel="noopener">Add to Chrome →</a><a href="todos/privacy.html">Privacy</a></div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ====================== NUMBERS ====================== -->
-  <section class="section" id="numbers">
-    <div class="section-head">
-      <div>
-        <span class="section-num">v.</span>
-        <span class="section-title">Numbers to know cold</span>
-      </div>
-      <div class="section-aside">The latencies, sizes, and throughputs you should be able to estimate without a calculator. Adapted from Jeff Dean's classic list.</div>
+<section class="section" id="writing">
+  <div class="section-head">
+    <div><span class="section-num">ii.</span><span class="section-title">Writing</span></div>
+    <div class="section-aside">Essays on building software and the thinking behind it.</div>
+  </div>
+  <div class="posts">
+    <a class="post" href="https://blog.filtercoffeeway.com/i-sent-an-ai-to-order-my-coffee-the-restaurant-s-ai-answered" target="_blank" rel="noopener">
+      <span class="where">Blog · Rangi</span>
+      <div><h4>I Sent an AI to Order My Coffee. The Restaurant's AI Answered.</h4><p>What I built, what I got wrong, and the one guardrail I couldn't move out of the prompt.</p></div>
+      <span class="go">Read →</span>
+    </a>
+    <a class="post" href="https://blog.filtercoffeeway.com/i-am-the-filter-coffee-way" target="_blank" rel="noopener">
+      <span class="where">Blog · Manifesto</span>
+      <div><h4>I Am the Filter Coffee Way</h4><p>Seven principles, one ritual — a philosophy for the craft of software, in the language of Madras mornings.</p></div>
+      <span class="go">Read →</span>
+    </a>
+    <a class="post" href="https://medium.com/@maheshsaravana/the-invisible-hand-of-expertise-why-success-isnt-always-conscious-4069997e03d0" target="_blank" rel="noopener">
+      <span class="where">Medium · Jun 2025</span>
+      <div><h4>The Invisible Hand of Expertise</h4><p>Why success isn't always conscious. From Kohli's six at the MCG to the surgeon's hands: how thousands of hours of practice compress into cognitive muscle memory.</p></div>
+      <span class="go">Read →</span>
+    </a>
+  </div>
+</section>
+
+<section class="section" id="engineering">
+  <div class="section-head">
+    <div><span class="section-num">iii.</span><span class="section-title">Software engineering</span></div>
+    <div class="section-aside">System designs worked end to end, and the reusable patterns they produced.</div>
+  </div>
+  <div class="notebook">
+    <a class="card" href="designs/url-shortener.html"><div class="card-kicker">Design</div><h3>URL Shortener</h3><p>Base62 IDs, layered caching, and the Cassandra-vs-Postgres call.</p></a>
+    <a class="card" href="designs/pastebin.html"><div class="card-kicker">Design</div><h3>Paste Bin</h3><p>Inline vs. object storage, and an expiry pipeline.</p></a>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <a class="card small" href="patterns/caching.html"><div class="card-kicker" style="margin-bottom:4px">Pattern</div><h3>Caching strategies</h3></a>
+      <a class="card small" href="patterns/token-generation.html"><div class="card-kicker" style="margin-bottom:4px">Pattern</div><h3>Token &amp; ID generation</h3></a>
+      <a class="card small" href="patterns/database-selection.html"><div class="card-kicker" style="margin-bottom:4px">Pattern</div><h3>Database selection</h3></a>
     </div>
+  </div>
+</section>
 
-    <div class="numbers-wrap">
-
-      <div class="number-group">
-        <h5>Latency</h5>
-        <div class="number-row"><span class="label">L1 cache reference</span><span class="leader"></span><span class="value">~1 ns</span></div>
-        <div class="number-row"><span class="label">L2 cache reference</span><span class="leader"></span><span class="value">~10 ns</span></div>
-        <div class="number-row"><span class="label">Main memory (RAM)</span><span class="leader"></span><span class="value">~100 ns</span></div>
-        <div class="number-row"><span class="label">SSD random read</span><span class="leader"></span><span class="value">~100 µs</span></div>
-        <div class="number-row"><span class="label">HDD seek</span><span class="leader"></span><span class="value">~10 ms</span></div>
-        <div class="number-row"><span class="label">Round-trip, same data center</span><span class="leader"></span><span class="value">~0.5 ms</span></div>
-        <div class="number-row"><span class="label">Round-trip, cross-region</span><span class="leader"></span><span class="value">~150 ms</span></div>
-      </div>
-
-      <div class="number-group">
-        <h5>Throughput &amp; sizes</h5>
-        <div class="number-row"><span class="label">1 Gbps NIC</span><span class="leader"></span><span class="value">~125 MB/s</span></div>
-        <div class="number-row"><span class="label">Typical DB row</span><span class="leader"></span><span class="value">~1 KB</span></div>
-        <div class="number-row"><span class="label">Tweet / short text</span><span class="leader"></span><span class="value">~280 B</span></div>
-        <div class="number-row"><span class="label">Compressed image</span><span class="leader"></span><span class="value">~300 KB</span></div>
-        <div class="number-row"><span class="label">1 min · 720p video</span><span class="leader"></span><span class="value">~50 MB</span></div>
-        <div class="number-row"><span class="label">Seconds in a day</span><span class="leader"></span><span class="value">86,400</span></div>
-        <div class="number-row"><span class="label">Seconds in a year</span><span class="leader"></span><span class="value">~31.5 M</span></div>
-      </div>
-
+<section class="section" style="border-bottom:none">
+  <div class="section-head" style="margin-bottom:18px"><div><span class="section-num">iv.</span><span class="section-title">How I work</span></div><div class="section-aside"><a href="https://blog.filtercoffeeway.com/i-am-the-filter-coffee-way" target="_blank" rel="noopener">The seven principles →</a></div></div>
+  <div class="principles-strip">
+    <span><b>01</b>Grind fresh</span><span><b>02</b>Drip slow</span><span><b>03</b>Find the ratio</span><span><b>04</b>Pour with intention</span><span><b>05</b>Show up every morning</span><span><b>06</b>Name the instant coffee</span><span><b>07</b>Brew the coffee, not the cup</span>
+  </div>
+</section>
+<footer>
+  <div class="footer-row">
+    <div class="footer-mark">Brewed in Madras. Served to the world. <span class="accent">— filter coffee way</span></div>
+    <div class="footer-meta">© 2026 · filtercoffeeway.com
+      <a href="about.html">About Filter Coffee</a>
+      <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
+      <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
     </div>
-  </section>
-
-  <!-- ====================== ROADMAP CTA ====================== -->
-  <section class="section">
-    <div class="roadmap-cta">
-      <div>
-        <h3>The full system design roadmap</h3>
-        <p>Every topic on the docket — what's published, what's drafting, and what's still just an interesting question. Updated as the notebook grows.</p>
-      </div>
-      <div class="right">
-        <a class="cta" href="_topic-roadmap.html">
-          Open the roadmap <span class="arrow">→</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ====================== FOOTER ====================== -->
-  <footer>
-    <div class="ornament-divider">
-      <span class="line"></span>
-      <span class="dot">❦</span>
-      <span class="line"></span>
-    </div>
-    <div class="footer-row" style="margin-top:24px;">
-      <div class="footer-mark">
-        Brewed in Madras. Served to the world. <span class="accent">— filter coffee way</span>
-      </div>
-      <div class="footer-meta">
-        © 2026 · filtercoffeeway.com
-        <a href="about.html">About Filter Coffee</a>
-        <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
-        <a href="_topic-roadmap.html">Roadmap</a>
-        <a href="todos/privacy.html">Privacy</a>
-        <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
-      </div>
-    </div>
-  </footer>
-
+  </div>
+</footer>
 </div>
-
 </body>
 </html>

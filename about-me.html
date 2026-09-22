@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Me · Filter Coffee Way</title>
+  <meta name="description" content="Mahesh — software engineer, backend and distributed systems. The person behind Filter Coffee Way." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <style>
+/* Filter Coffee Way — base */
+:root {
+  --paper:#f6efe1; --paper-2:#fbf6ec; --paper-3:#efe5d0;
+  --ink:#2b1d12; --ink-2:#6b5947; --ink-3:#a89580;
+  --rule:#e3d6bf; --rule-2:#d6c5a4;
+  --accent:#a85a2a; --accent-soft:#d99c5e; --ok:#6a7d5b;
+  --shadow:0 1px 0 rgba(43,29,18,0.04), 0 12px 32px -18px rgba(43,29,18,0.25);
+  --serif:"Fraunces","Iowan Old Style",Georgia,serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono","SF Mono",Menlo,monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { -webkit-font-smoothing:antialiased; }
+body {
+  font-family:var(--sans); background:var(--paper); color:var(--ink);
+  line-height:1.6; font-size:16px;
+  background-image:
+    radial-gradient(rgba(168,90,42,0.035) 1px, transparent 1px),
+    radial-gradient(rgba(43,29,18,0.025) 1px, transparent 1px);
+  background-size:24px 24px, 37px 37px; background-position:0 0, 11px 13px;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { color:var(--ink); }
+.container { max-width:1180px; margin:0 auto; padding:0 40px; }
+
+
+/* Masthead */
+.masthead { padding:22px 0 16px; border-bottom:1px solid var(--rule); }
+.masthead-row { display:flex; align-items:baseline; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+.brand { display:flex; align-items:center; gap:14px; }
+.brand img { border-radius:8px; }
+.wordmark { font-family:var(--serif); font-weight:700; font-size:22px; letter-spacing:-0.01em; color:var(--ink); }
+.wordmark .amp { color:var(--accent); font-style:italic; font-weight:500; }
+.wordmark-sub { display:block; font-size:11px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-3); margin-top:4px; }
+.masthead nav { display:flex; gap:26px; flex-wrap:wrap; font-size:13px; font-weight:500; }
+.masthead nav a { color:var(--ink-2); border-bottom:1px solid transparent; padding-bottom:2px; }
+.masthead nav a:hover, .masthead nav a.active { color:var(--ink); border-bottom-color:var(--accent); }
+
+/* Common bits */
+.kicker { font-size:11px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:var(--accent); display:inline-flex; align-items:center; gap:10px; }
+.kicker::before { content:""; width:28px; height:1px; background:var(--accent); }
+.cta { display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--ink); padding:10px 0; border-bottom:2px solid var(--accent); }
+.cta:hover { color:var(--accent); }
+.cta-2 { border-bottom-color:var(--rule-2); color:var(--ink-2); }
+.pill { display:inline-block; padding:3px 9px; border-radius:99px; background:var(--paper-3); color:var(--ink-2); font-size:11px; letter-spacing:0.02em; }
+.pill.live { color:var(--ok); background:color-mix(in srgb, var(--ok) 14%, var(--paper-2)); }
+.section { padding:64px 0; border-bottom:1px solid var(--rule); }
+.section-head { display:flex; align-items:baseline; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:32px; }
+.section-num { font-family:var(--serif); font-style:italic; font-weight:300; font-size:18px; color:var(--accent); margin-right:12px; }
+.section-title { font-family:var(--serif); font-weight:600; font-size:32px; letter-spacing:-0.015em; }
+.section-aside { font-size:13px; color:var(--ink-3); font-style:italic; max-width:42ch; }
+.card { background:var(--paper-2); border:1px solid var(--rule); border-radius:4px; padding:26px 28px; transition:transform .2s, box-shadow .2s; display:flex; flex-direction:column; color:inherit; }
+.card:hover { transform:translateY(-3px); box-shadow:var(--shadow); color:inherit; }
+.card h3 { font-family:var(--serif); font-weight:600; font-size:24px; line-height:1.15; letter-spacing:-0.01em; margin-bottom:8px; }
+.card p { font-size:14px; color:var(--ink-2); line-height:1.55; }
+.card .meta { margin-top:auto; padding-top:16px; display:flex; gap:6px; flex-wrap:wrap; }
+.card-kicker { font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-bottom:12px; }
+
+/* Footer */
+footer { padding:48px 0 72px; }
+.footer-row { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:16px; }
+.footer-mark { font-family:var(--serif); font-style:italic; font-size:16px; color:var(--ink-2); }
+.footer-mark .accent { color:var(--accent); }
+.footer-meta { font-size:12px; color:var(--ink-3); }
+.footer-meta a { color:var(--ink-2); margin-left:18px; }
+
+@media (max-width:900px) {
+  .container { padding:0 24px; }
+  .masthead-row { flex-direction:column; align-items:flex-start; }
+}
+
+/* ---------- Page ---------- */
+.me { max-width:720px; padding:72px 0 64px; }
+.me .top { display:flex; align-items:center; gap:22px; margin-bottom:28px; }
+.photo { width:88px; height:88px; border-radius:50%; background:var(--paper-3); border:1px dashed var(--rule-2); display:flex; align-items:center; justify-content:center; color:var(--ink-3); font-family:var(--mono); font-size:10px; flex-shrink:0; }
+.me h1 { font-family:var(--serif); font-weight:700; font-size:48px; line-height:1; letter-spacing:-0.025em; }
+.me .role { font-size:13px; color:var(--ink-3); letter-spacing:0.04em; margin-top:8px; }
+.me p { font-family:var(--serif); font-size:19px; line-height:1.6; color:var(--ink-2); margin-bottom:18px; }
+.me p.lede { font-size:23px; color:var(--ink); }
+.cares { margin:36px 0; border-top:1px solid var(--rule); }
+.care { display:grid; grid-template-columns:36px 1fr; gap:12px; padding:18px 0; border-bottom:1px solid var(--rule); }
+.care .n { font-family:var(--mono); font-size:11px; color:var(--accent); padding-top:6px; }
+.care h3 { font-family:var(--serif); font-weight:600; font-size:20px; }
+.care p { font-family:var(--sans); font-size:14.5px; margin:2px 0 0; }
+.me .links { display:flex; gap:26px; flex-wrap:wrap; margin-top:32px; }
+</style>
+</head><body>
+<div class="container">
+<header class="masthead">
+  <div class="masthead-row">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="" width="36" height="36" />
+      <div>
+        <div class="wordmark">Filter Coffee <span class="amp">Way</span></div>
+        <span class="wordmark-sub">Ground fresh. Think deep. Build strong.</span>
+      </div>
+    </a>
+    <nav>
+        <a href="index.html#projects">Projects</a>
+        <a href="index.html#writing">Writing</a>
+        <a href="index.html#engineering">Software Engineering</a>
+        <a href="about-me.html" class="active">About Me</a>
+        <a href="about.html">Filter Coffee</a>
+      </nav>
+  </div>
+</header>
+<section class="me">
+  <div class="top">
+    <div class="photo">[ photo ]</div>
+    <div><h1>Mahesh</h1><div class="role">Software engineer · backend &amp; distributed systems · San Francisco</div></div>
+  </div>
+
+  <p class="lede">I work on the parts of software nobody sees until they break.</p>
+  <p>Most systems I've worked on grew in pieces: services, queues and data stores built by different teams at different times. My job is usually to make them behave like one thing again, so they're fast, predictable and boring to run. The part I enjoy more is helping the engineers who look after them get better at it.</p>
+  <p>Outside work I build small things. <a href="index.html#projects">Todos</a> is on the Chrome Web Store. <a href="index.html#projects">Rangi</a> is a voice agent that ordered me a coffee. This site is where that work, and the thinking behind it, ends up.</p>
+
+  <div class="cares">
+    <div class="care"><span class="n">01</span><div><h3>Cohesion over cleverness</h3><p>One clear path through a system beats five clever ones.</p></div></div>
+    <div class="care"><span class="n">02</span><div><h3>Grow the people, not just the code</h3><p>A system is only as reliable as the team that understands it.</p></div></div>
+    <div class="care"><span class="n">03</span><div><h3>Go, and AI-native tooling</h3><p>Boring, fast languages underneath; agents where they actually earn their place.</p></div></div>
+  </div>
+
+  <p>Why the coffee? I grew up in Madras, where filter coffee is made slowly and served only when it's ready. I try to build software the same way. <a href="https://blog.filtercoffeeway.com/i-am-the-filter-coffee-way" target="_blank" rel="noopener">The seven principles →</a></p>
+
+  <div class="links">
+    <a class="cta" href="https://www.linkedin.com/in/saravana-mahesh/" target="_blank" rel="noopener">LinkedIn →</a>
+    <a class="cta cta-2" href="https://github.com/filtercoffeeway" target="_blank" rel="noopener">GitHub</a>
+    <a class="cta cta-2" href="mailto:filtercoffeeway@gmail.com">Email</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-row">
+    <div class="footer-mark">Brewed in Madras. Served to the world. <span class="accent">— filter coffee way</span></div>
+    <div class="footer-meta">© 2026 · filtercoffeeway.com
+      <a href="about.html">About Filter Coffee</a>
+      <a href="https://blog.filtercoffeeway.com" target="_blank" rel="noopener">Blog</a>
+      <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+</div>
+</body>
+</html>
