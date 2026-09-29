@@ -151,7 +151,7 @@ Every page has the same masthead at the top, inside `.container`. Nav links chan
       <a href="../index.html#patterns">Patterns</a>
       <a href="../index.html#numbers">Numbers</a>
       <a href="../_topic-roadmap.html">Roadmap</a>
-      <a href="https://github.com/filtercoffeeway/system-design" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/filtercoffeeway/filtercoffeeway-website" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </div>
   <div class="issue-strip">
